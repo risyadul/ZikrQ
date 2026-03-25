@@ -11,5 +11,4 @@ class MarkedVerseRecordModel {
   late int surahId;
 
   late int verseNumber;
-  late bool isMarked;
 }

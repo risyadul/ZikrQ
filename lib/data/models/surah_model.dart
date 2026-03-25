@@ -7,6 +7,7 @@ part 'surah_model.g.dart';
 class SurahModel {
   Id id = Isar.autoIncrement;
 
+  @Index(unique: true)
   late int surahId; // 1-114
   late String name;
   late String nameArabic;
