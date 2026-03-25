@@ -1,0 +1,75 @@
+// lib/data/datasources/local/memorization_local_datasource.dart
+import 'package:isar/isar.dart';
+import 'package:zikrq/data/models/marked_verse_record_model.dart';
+import 'package:zikrq/data/models/memorization_record_model.dart';
+
+class MemorizationLocalDatasource {
+  const MemorizationLocalDatasource(this._isar);
+  final Isar _isar;
+
+  Future<List<MemorizationRecordModel>> getAllRecords() =>
+      _isar.memorizationRecordModels.where().findAll();
+
+  Future<MemorizationRecordModel?> getRecord(int surahId) => _isar
+      .memorizationRecordModels
+      .filter()
+      .surahIdEqualTo(surahId)
+      .findFirst();
+
+  Future<void> updateStatus(int surahId, int statusIndex) async {
+    final record = await getRecord(surahId);
+    if (record == null) return;
+    await _isar.writeTxn(() async {
+      record
+        ..statusIndex = statusIndex
+        ..updatedAt = DateTime.now();
+      await _isar.memorizationRecordModels.put(record);
+    });
+  }
+
+  Future<void> updateLastAccessed(int surahId) async {
+    final record = await getRecord(surahId);
+    if (record == null) return;
+    await _isar.writeTxn(() async {
+      record.lastAccessedAt = DateTime.now();
+      await _isar.memorizationRecordModels.put(record);
+    });
+  }
+
+  Future<List<MemorizationRecordModel>> getRecentlyAccessed(int limit) => _isar
+      .memorizationRecordModels
+      .filter()
+      .lastAccessedAtIsNotNull()
+      .sortByLastAccessedAtDesc()
+      .limit(limit)
+      .findAll();
+
+  /// Record presence = marked, absence = not marked.
+  Future<bool> isVerseMark(int surahId, int verseNumber) async {
+    final record = await _isar.markedVerseRecordModels
+        .filter()
+        .surahIdEqualTo(surahId)
+        .verseNumberEqualTo(verseNumber)
+        .findFirst();
+    return record != null;
+  }
+
+  /// Toggle: delete record if present (unmark), insert if absent (mark).
+  Future<void> toggleVerseMark(int surahId, int verseNumber) async {
+    await _isar.writeTxn(() async {
+      final existing = await _isar.markedVerseRecordModels
+          .filter()
+          .surahIdEqualTo(surahId)
+          .verseNumberEqualTo(verseNumber)
+          .findFirst();
+      if (existing != null) {
+        await _isar.markedVerseRecordModels.delete(existing.id);
+      } else {
+        final record = MarkedVerseRecordModel()
+          ..surahId = surahId
+          ..verseNumber = verseNumber;
+        await _isar.markedVerseRecordModels.put(record);
+      }
+    });
+  }
+}
