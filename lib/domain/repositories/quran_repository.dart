@@ -8,8 +8,11 @@ abstract interface class QuranRepository {
   Future<List<Verse>> getVersesBySurah(int surahId);
   Future<void> updateMemorizationStatus(int surahId, MemorizationStatus status);
   Future<void> toggleVerseMark(int surahId, int verseNumber);
+
+  /// Called directly from the presentation layer (no use case wrapper needed —
+  /// these are point queries, not orchestration).
   Future<bool> isVerseMark(int surahId, int verseNumber);
+  Future<void> updateLastAccessed(int surahId);
   Future<MemorizationStats> getMemorizationStats();
   Future<void> seedIfEmpty();
-  Future<void> updateLastAccessed(int surahId);
 }

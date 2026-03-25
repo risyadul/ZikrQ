@@ -26,6 +26,7 @@ void main() {
     );
     when(() => repo.getMemorizationStats()).thenAnswer((_) async => expected);
     final result = await useCase();
+    verify(() => repo.getMemorizationStats()).called(1);
     expect(result, expected);
   });
 }

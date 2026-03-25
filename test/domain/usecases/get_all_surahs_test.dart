@@ -17,9 +17,9 @@ void main() {
   });
 
   test('calls getAllSurahs with no filter', () async {
-    when(() => repo.getAllSurahs(filter: null)).thenAnswer((_) async => []);
+    when(() => repo.getAllSurahs()).thenAnswer((_) async => []);
     await useCase();
-    verify(() => repo.getAllSurahs(filter: null)).called(1);
+    verify(() => repo.getAllSurahs()).called(1);
   });
 
   test('calls getAllSurahs with status filter', () async {
@@ -44,7 +44,7 @@ void main() {
         status: MemorizationStatus.memorized,
       ),
     ];
-    when(() => repo.getAllSurahs(filter: null)).thenAnswer((_) async => surahs);
+    when(() => repo.getAllSurahs()).thenAnswer((_) async => surahs);
     final result = await useCase();
     expect(result, surahs);
   });
