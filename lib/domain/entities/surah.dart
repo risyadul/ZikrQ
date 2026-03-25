@@ -31,6 +31,9 @@ class Surah {
     status: status ?? this.status,
   );
 
+  // Equality is based on id and status only — surahs are considered the same
+  // UI item when their identity (id) and memorization state (status) match.
+  // Other fields (name, verses, etc.) are static and do not affect diffing.
   @override
   bool operator ==(Object other) =>
       other is Surah && other.id == id && other.status == status;
