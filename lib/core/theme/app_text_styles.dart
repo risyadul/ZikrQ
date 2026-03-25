@@ -1,12 +1,12 @@
 // lib/core/theme/app_text_styles.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'app_colors.dart';
+import 'package:zikrq/core/theme/app_colors.dart';
 
 abstract final class AppTextStyles {
   static TextStyle get arabicVerse => GoogleFonts.scheherazadeNew(
     fontSize: 22,
-    height: 2.0,
+    height: 2,
     color: AppColors.onSurface,
   );
 

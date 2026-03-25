@@ -1,14 +1,13 @@
 // lib/core/theme/app_theme.dart
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
-import 'app_text_styles.dart';
+import 'package:zikrq/core/theme/app_colors.dart';
+import 'package:zikrq/core/theme/app_text_styles.dart';
 
 abstract final class AppTheme {
   static ThemeData get dark => ThemeData(
     brightness: Brightness.dark,
     scaffoldBackgroundColor: AppColors.background,
     colorScheme: const ColorScheme.dark(
-      background: AppColors.background,
       surface: AppColors.surface,
       primary: AppColors.primary,
       onPrimary: AppColors.background,
