@@ -20,7 +20,9 @@ class StatisticsPage extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(
+          child: Text('Gagal memuat statistik', style: AppTextStyles.surahMeta),
+        ),
         data: (stats) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
