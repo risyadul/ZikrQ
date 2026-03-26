@@ -12,9 +12,24 @@ import 'package:zikrq/presentation/providers/surah_list_provider.dart';
 import 'package:zikrq/presentation/widgets/status_badge.dart';
 import 'package:zikrq/presentation/widgets/status_bottom_sheet.dart';
 
-class SurahDetailPage extends ConsumerWidget {
+class SurahDetailPage extends ConsumerStatefulWidget {
   const SurahDetailPage({required this.surahId, super.key});
   final int surahId;
+
+  @override
+  ConsumerState<SurahDetailPage> createState() => _SurahDetailPageState();
+}
+
+class _SurahDetailPageState extends ConsumerState<SurahDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(memorizationLocalDatasourceProvider)
+          .updateLastAccessed(widget.surahId);
+    });
+  }
 
   void _showStatusSheet(
     BuildContext context,
@@ -26,21 +41,23 @@ class SurahDetailPage extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) =>
-          StatusBottomSheet(surahId: surahId, currentStatus: currentStatus),
+      builder: (_) => StatusBottomSheet(
+        surahId: widget.surahId,
+        currentStatus: currentStatus,
+      ),
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final versesAsync = ref.watch(surahDetailProvider(surahId));
+  Widget build(BuildContext context) {
+    final versesAsync = ref.watch(surahDetailProvider(widget.surahId));
     final surahListAsync = ref.watch(surahListProvider);
 
     // Find the current surah for title and status display
     Surah? surah;
     final surahList = surahListAsync.valueOrNull;
     if (surahList != null) {
-      final matches = surahList.where((s) => s.id == surahId);
+      final matches = surahList.where((s) => s.id == widget.surahId);
       surah = matches.isNotEmpty ? matches.first : null;
     }
 
@@ -85,7 +102,7 @@ class SurahDetailPage extends ConsumerWidget {
           itemBuilder: (context, index) {
             // Bismillah header (skip for Surah 1 and Surah 9)
             if (index == 0) {
-              if (surahId == 9 || surahId == 1) {
+              if (widget.surahId == 9 || widget.surahId == 1) {
                 return const SizedBox.shrink();
               }
               return Padding(
@@ -107,8 +124,8 @@ class SurahDetailPage extends ConsumerWidget {
               onToggleMark: () async {
                 await ref
                     .read(toggleVerseMarkUseCaseProvider)
-                    .call(surahId, verseWithMark.verse.number);
-                ref.invalidate(surahDetailProvider(surahId));
+                    .call(widget.surahId, verseWithMark.verse.number);
+                ref.invalidate(surahDetailProvider(widget.surahId));
               },
             );
           },
