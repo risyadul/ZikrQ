@@ -6,6 +6,7 @@ import 'package:zikrq/core/theme/app_text_styles.dart';
 abstract final class AppTheme {
   static ThemeData get dark => ThemeData(
     brightness: Brightness.dark,
+    fontFamily: 'Poppins',
     scaffoldBackgroundColor: AppColors.background,
     colorScheme: const ColorScheme.dark(
       surface: AppColors.surface,
@@ -19,6 +20,7 @@ abstract final class AppTheme {
       backgroundColor: AppColors.background,
       elevation: 0,
       titleTextStyle: TextStyle(
+        fontFamily: 'Poppins',
         fontSize: 20,
         fontWeight: FontWeight.w700,
         color: AppColors.primary,
