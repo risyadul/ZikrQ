@@ -1,9 +1,13 @@
 // lib/presentation/widgets/status_bottom_sheet.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zikrq/core/theme/app_colors.dart';
 import 'package:zikrq/domain/entities/memorization_status.dart';
 import 'package:zikrq/presentation/providers/core_providers.dart';
+import 'package:zikrq/presentation/providers/home_provider.dart';
+import 'package:zikrq/presentation/providers/stats_provider.dart';
+import 'package:zikrq/presentation/providers/surah_list_provider.dart';
 
 class StatusBottomSheet extends ConsumerWidget {
   const StatusBottomSheet({
@@ -51,10 +55,17 @@ class StatusBottomSheet extends ConsumerWidget {
                     ? const Icon(Icons.check, color: AppColors.primary)
                     : null,
                 onTap: () async {
+                  HapticFeedback.lightImpact();
                   await ref
                       .read(updateMemorizationStatusUseCaseProvider)
                       .call(surahId, status);
-                  if (context.mounted) Navigator.of(context).pop();
+                  if (context.mounted) {
+                    ref.invalidate(surahListProvider);
+                    ref.invalidate(memorizationStatsProvider);
+                    ref.invalidate(recentlyAccessedProvider);
+                    ref.invalidate(needsReviewProvider);
+                    Navigator.of(context).pop();
+                  }
                 },
               ),
             ),
