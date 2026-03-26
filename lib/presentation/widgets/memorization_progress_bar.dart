@@ -14,14 +14,21 @@ class MemorizationProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(height),
-      child: LinearProgressIndicator(
-        value: value.clamp(0.0, 1.0),
-        backgroundColor: AppColors.notStarted.withValues(alpha: 0.4),
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-        minHeight: height,
-      ),
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: value.clamp(0.0, 1.0)),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      builder: (context, animatedValue, _) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(height),
+          child: LinearProgressIndicator(
+            value: animatedValue,
+            backgroundColor: AppColors.notStarted.withValues(alpha: 0.4),
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            minHeight: height,
+          ),
+        );
+      },
     );
   }
 }
