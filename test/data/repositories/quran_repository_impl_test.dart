@@ -27,6 +27,13 @@ MemorizationRecordModel _fakeRecord(int surahId, int statusIndex) =>
       ..statusIndex = statusIndex
       ..updatedAt = DateTime.now();
 
+VerseModel _fakeVerseModel(int surahId) => VerseModel()
+  ..verseId = 1
+  ..surahId = surahId
+  ..number = 1
+  ..arabic = 'بِسْمِ اللَّهِ'
+  ..translation = 'In the name of Allah';
+
 void main() {
   late MockQuranLocalDatasource quranDs;
   late MockMemorizationLocalDatasource memDs;
@@ -53,6 +60,16 @@ void main() {
     expect(surahs.first.status, MemorizationStatus.memorized);
   });
 
+  test('getAllSurahs defaults to notStarted when no record exists', () async {
+    when(
+      () => quranDs.getAllSurahModels(),
+    ).thenAnswer((_) async => [_fakeSurahModel(1)]);
+    when(() => memDs.getAllRecords()).thenAnswer((_) async => []);
+
+    final surahs = await repo.getAllSurahs();
+    expect(surahs.first.status, MemorizationStatus.notStarted);
+  });
+
   test('getAllSurahs with filter returns only matching', () async {
     when(
       () => quranDs.getAllSurahModels(),
@@ -69,6 +86,20 @@ void main() {
     );
     expect(result.length, 1);
     expect(result.first.id, 1);
+  });
+
+  test('getVersesBySurah maps model fields correctly', () async {
+    when(
+      () => quranDs.getVersesBySurahId(1),
+    ).thenAnswer((_) async => [_fakeVerseModel(1)]);
+
+    final verses = await repo.getVersesBySurah(1);
+    expect(verses.length, 1);
+    expect(verses.first.id, 1);
+    expect(verses.first.surahId, 1);
+    expect(verses.first.number, 1);
+    expect(verses.first.arabic, 'بِسْمِ اللَّهِ');
+    expect(verses.first.translation, 'In the name of Allah');
   });
 
   test('getMemorizationStats counts correctly', () async {

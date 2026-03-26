@@ -1,4 +1,5 @@
 // lib/data/repositories/quran_repository_impl.dart
+import 'package:meta/meta.dart';
 import 'package:zikrq/data/datasources/local/memorization_local_datasource.dart';
 import 'package:zikrq/data/datasources/local/quran_local_datasource.dart';
 import 'package:zikrq/data/models/memorization_record_model.dart';
@@ -10,6 +11,7 @@ import 'package:zikrq/domain/entities/surah.dart';
 import 'package:zikrq/domain/entities/verse.dart';
 import 'package:zikrq/domain/repositories/quran_repository.dart';
 
+@immutable
 class QuranRepositoryImpl implements QuranRepository {
   const QuranRepositoryImpl({
     required QuranLocalDatasource quranDatasource,
@@ -111,7 +113,9 @@ class QuranRepositoryImpl implements QuranRepository {
     totalVerses: m.totalVerses,
     juzStart: m.juzStart,
     revelation: m.revelation,
-    status: record != null
+    status:
+        (record != null &&
+            record.statusIndex < MemorizationStatus.values.length)
         ? MemorizationStatus.values[record.statusIndex]
         : MemorizationStatus.notStarted,
   );
