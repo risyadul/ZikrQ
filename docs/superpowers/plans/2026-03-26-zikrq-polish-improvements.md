@@ -16,11 +16,15 @@
 |------|--------|
 | `lib/presentation/widgets/status_bottom_sheet.dart` | + provider invalidation, + haptic on tap |
 | `lib/presentation/pages/surah_list/surah_list_page.dart` | fix SizedBox height + padding, + haptic on chip tap |
-| `pubspec.yaml` | + font assets declaration |
+| `pubspec.yaml` | + font assets declaration under `flutter > fonts:` |
 | `assets/fonts/Poppins/` | new — Poppins TTF files |
 | `assets/fonts/SchmaherazadeNew/` | new — Scheherazade New TTF file |
-| `lib/core/theme/app_text_styles.dart` | use fontFamily: 'Poppins' + remove google_fonts for Poppins |
-| `lib/core/theme/app_theme.dart` | add fontFamily: 'Poppins' to ThemeData |
+| `lib/core/theme/app_text_styles.dart` | use `fontFamily: 'Poppins'` (native Flutter font) |
+| `lib/core/theme/app_theme.dart` | add `fontFamily: 'Poppins'` to ThemeData |
+
+> **Font approach note:** The spec described using `GoogleFonts.poppins()` with `allowRuntimeFetching = false`. This plan uses Flutter's native `flutter > fonts:` registration instead, for two reasons: (1) `google_fonts` 6.x does not bundle fonts — with `allowRuntimeFetching = false` it would silently fall back to the system font unless the file paths exactly match its internal resolver; (2) native font registration is guaranteed offline and deterministic. The visual result is identical. `lib/main.dart` does NOT need a `GoogleFonts.config.allowRuntimeFetching = false` line under this approach.
+
+> **Bookmark icon note:** The spec §4-B mentions an `AnimatedSwitcher` on a "bookmark icon toggle" and haptic on "bookmark icon tap". The current `SurahTile` implementation has **no bookmark icon or bookmark feature**. These spec items are intentionally omitted — they cannot be applied to UI that does not exist. All other animations and haptic triggers from §4-A and §4-B are implemented.
 | `lib/presentation/widgets/status_badge.dart` | AnimatedContainer for color |
 | `lib/presentation/widgets/memorization_progress_bar.dart` | TweenAnimationBuilder for value |
 | `lib/presentation/widgets/surah_tile.dart` | StatefulWidget + GestureDetector swipe + drag reveal |
@@ -303,7 +307,7 @@
   );
   ```
 
-  Also remove the `app_text_styles.dart` import if it triggers an unused import warning (it's still needed for `textTheme`).
+  Also remove the `google_fonts` import from `app_text_styles.dart` since it is no longer used there. Keep the import in `app_theme.dart` only if it remains in use.
 
 - [ ] **Step 6: Run flutter pub get and hot-restart**
 
