@@ -125,7 +125,7 @@ Three improvements applied together for a cohesive tactile UX upgrade.
   1. `HapticFeedback.lightImpact()`
   2. `showModalBottomSheet(...)` presenting `StatusBottomSheet` for that surah
 - The tile **does not stay offset** — it snaps back to its original position immediately as the sheet opens (swipe is a trigger, not a slide-to-reveal affordance)
-- During the drag, a subtle slide-and-fade reveal of a status icon on the right edge of the tile provides visual drag feedback. This indicator fades in proportionally to drag progress and disappears when the sheet opens or the drag is cancelled.
+- During the drag, a subtle slide-and-fade reveal of the **current memorization status icon** (same icon used in `StatusBadge`) on the right edge of the tile provides visual drag feedback. This indicator fades in proportionally to drag progress and disappears when the sheet opens or the drag is cancelled.
 
 **Why `GestureDetector` over `Dismissible`:** `Dismissible` is semantically designed for item removal/archival. Using it for a status action would be semantically wrong and would require fighting its built-in dismiss behavior.
 
