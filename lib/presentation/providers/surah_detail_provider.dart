@@ -9,6 +9,9 @@ final surahDetailProvider = FutureProvider.family<List<VerseWithMark>, int>((
   surahId,
 ) async {
   final getVerses = ref.watch(getVersesBySurahUseCaseProvider);
+  // TODO(mvp): Replace with a use case that returns Set<int> of marked
+  // verse numbers in a single query, to avoid N+1 isVerseMark calls
+  // and keep the presentation layer decoupled from the repository.
   final repo = ref.watch(quranRepositoryProvider);
 
   final verses = await getVerses(surahId);

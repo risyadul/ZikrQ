@@ -43,6 +43,7 @@ void main() {
     );
 
     final container = makeContainer();
+    addTearDown(container.dispose);
     final result = await container.read(surahListProvider.future);
     expect(result.length, 2);
   });
@@ -53,9 +54,23 @@ void main() {
     );
 
     final container = makeContainer();
+    addTearDown(container.dispose);
     container.read(surahSearchQueryProvider.notifier).state = 'fatihah';
     final result = await container.read(surahListProvider.future);
     expect(result.length, 1);
     expect(result.first.name, 'Al-Fatihah');
+  });
+
+  test('passes status filter to use case', () async {
+    when(
+      () => repo.getAllSurahs(filter: MemorizationStatus.memorized),
+    ).thenAnswer((_) async => [_surah(1, 'Al-Fatihah')]);
+
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    container.read(surahStatusFilterProvider.notifier).state =
+        MemorizationStatus.memorized;
+    final result = await container.read(surahListProvider.future);
+    expect(result.length, 1);
   });
 }
