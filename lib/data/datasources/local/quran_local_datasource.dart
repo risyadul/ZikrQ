@@ -15,6 +15,9 @@ class QuranLocalDatasource {
   Future<bool> get isEmpty async => await _isar.surahModels.count() == 0;
 
   Future<void> seedFromAssets() async {
+    // Guard: only seed if the database is empty.
+    if (!await isEmpty) return;
+
     final jsonString = await rootBundle.loadString(AppConstants.quranAssetPath);
     final data = json.decode(jsonString) as List<dynamic>;
 
@@ -64,8 +67,11 @@ class QuranLocalDatasource {
   Future<List<SurahModel>> getAllSurahModels() =>
       _isar.surahModels.where().sortBySurahId().findAll();
 
-  Future<List<VerseModel>> getVersesBySurahId(int surahId) =>
-      _isar.verseModels.filter().surahIdEqualTo(surahId).findAll();
+  Future<List<VerseModel>> getVersesBySurahId(int surahId) => _isar.verseModels
+      .filter()
+      .surahIdEqualTo(surahId)
+      .sortByNumber()
+      .findAll();
 
   /// Returns which Juz a surah starts in.
   /// Standard 30-juz division of the Quran.

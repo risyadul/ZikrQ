@@ -46,11 +46,10 @@ class MemorizationLocalDatasource {
 
   /// Record presence = marked, absence = not marked.
   Future<bool> isVerseMark(int surahId, int verseNumber) async {
-    final record = await _isar.markedVerseRecordModels
-        .filter()
-        .surahIdEqualTo(surahId)
-        .verseNumberEqualTo(verseNumber)
-        .findFirst();
+    final record = await _isar.markedVerseRecordModels.getBySurahIdVerseNumber(
+      surahId,
+      verseNumber,
+    );
     return record != null;
   }
 
@@ -58,10 +57,7 @@ class MemorizationLocalDatasource {
   Future<void> toggleVerseMark(int surahId, int verseNumber) async {
     await _isar.writeTxn(() async {
       final existing = await _isar.markedVerseRecordModels
-          .filter()
-          .surahIdEqualTo(surahId)
-          .verseNumberEqualTo(verseNumber)
-          .findFirst();
+          .getBySurahIdVerseNumber(surahId, verseNumber);
       if (existing != null) {
         await _isar.markedVerseRecordModels.delete(existing.id);
       } else {
