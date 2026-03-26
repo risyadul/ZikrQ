@@ -1,5 +1,6 @@
 // lib/presentation/pages/surah_list/surah_list_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zikrq/core/theme/app_colors.dart';
@@ -68,13 +69,10 @@ class SurahListPage extends ConsumerWidget {
               ),
               // Filter chips
               SizedBox(
-                height: 44,
+                height: 48,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _filters.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
@@ -83,9 +81,11 @@ class SurahListPage extends ConsumerWidget {
                     return ChoiceChip(
                       label: Text(_filterLabels[index]),
                       selected: isActive,
-                      onSelected: (_) =>
-                          ref.read(surahStatusFilterProvider.notifier).state =
-                              filter,
+                      onSelected: (_) {
+                        HapticFeedback.lightImpact();
+                        ref.read(surahStatusFilterProvider.notifier).state =
+                            filter;
+                      },
                       selectedColor: AppColors.primary.withValues(alpha: 0.2),
                       backgroundColor: AppColors.surface,
                       labelStyle: TextStyle(
