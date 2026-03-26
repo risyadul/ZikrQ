@@ -38,7 +38,7 @@ void main() {
   );
 
   test('returns all surahs when no filter or search', () async {
-    when(() => repo.getAllSurahs(filter: null)).thenAnswer(
+    when(() => repo.getAllSurahs()).thenAnswer(
       (_) async => [_surah(1, 'Al-Fatihah'), _surah(2, 'Al-Baqarah')],
     );
 
@@ -49,7 +49,7 @@ void main() {
   });
 
   test('filters by search query', () async {
-    when(() => repo.getAllSurahs(filter: null)).thenAnswer(
+    when(() => repo.getAllSurahs()).thenAnswer(
       (_) async => [_surah(1, 'Al-Fatihah'), _surah(2, 'Al-Baqarah')],
     );
 
