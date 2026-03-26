@@ -43,7 +43,17 @@ class HomePage extends ConsumerWidget {
                   child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               ),
-              error: (e, _) => const SizedBox.shrink(),
+              error: (e, _) => Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Gagal memuat statistik',
+                  style: AppTextStyles.surahMeta,
+                ),
+              ),
               data: (stats) => Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(

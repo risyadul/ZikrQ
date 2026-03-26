@@ -6,8 +6,8 @@ import 'package:zikrq/presentation/providers/core_providers.dart';
 
 // Recently accessed surahs (last 3 with non-null lastAccessedAt)
 final recentlyAccessedProvider = FutureProvider<List<Surah>>((ref) async {
-  final memDs = ref.watch(memorizationLocalDatasourceProvider);
-  final repo = ref.watch(quranRepositoryProvider);
+  final memDs = ref.read(memorizationLocalDatasourceProvider);
+  final repo = ref.read(quranRepositoryProvider);
 
   final recentRecords = await memDs.getRecentlyAccessed(3);
   if (recentRecords.isEmpty) return [];
@@ -22,7 +22,7 @@ final recentlyAccessedProvider = FutureProvider<List<Surah>>((ref) async {
 
 // Surahs that need review (max 5)
 final needsReviewProvider = FutureProvider<List<Surah>>((ref) async {
-  final repo = ref.watch(quranRepositoryProvider);
+  final repo = ref.read(quranRepositoryProvider);
   final surahs = await repo.getAllSurahs(
     filter: MemorizationStatus.needsReview,
   );
