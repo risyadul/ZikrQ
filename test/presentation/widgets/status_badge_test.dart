@@ -10,7 +10,7 @@ void main() {
         home: Scaffold(body: StatusBadge(status: MemorizationStatus.memorized)),
       ),
     );
-    expect(find.text('Sudah Hafal'), findsOneWidget);
+    expect(find.text('HAFAL'), findsOneWidget);
   });
 
   testWidgets('StatusBadge shows correct label for needsReview', (
@@ -23,6 +23,6 @@ void main() {
         ),
       ),
     );
-    expect(find.text('Perlu Murojaah'), findsOneWidget);
+    expect(find.text('MUROJAAH'), findsOneWidget);
   });
 }

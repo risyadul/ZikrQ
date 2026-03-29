@@ -25,6 +25,6 @@ void main() {
     );
 
     expect(find.text('Al-Fatihah'), findsOneWidget);
-    expect(find.text('7 ayat · Juz 1'), findsOneWidget);
+    expect(find.text('7 Ayat'), findsOneWidget);
   });
 }
