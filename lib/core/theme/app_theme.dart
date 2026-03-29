@@ -1,5 +1,6 @@
 // lib/core/theme/app_theme.dart
 import 'package:flutter/material.dart';
+
 import 'package:zikrq/core/theme/app_colors.dart';
 import 'package:zikrq/core/theme/app_text_styles.dart';
 
@@ -16,30 +17,27 @@ abstract final class AppTheme {
       secondary: AppColors.secondary,
       error: AppColors.needsReview,
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.background,
+    appBarTheme: AppBarTheme(
+      backgroundColor: AppColors.navBarBase.withValues(alpha: 0.7),
       elevation: 0,
-      titleTextStyle: TextStyle(
-        fontFamily: 'Poppins',
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-        color: AppColors.primary,
-      ),
-      iconTheme: IconThemeData(color: AppColors.secondary),
+      scrolledUnderElevation: 0,
+      titleTextStyle: AppTextStyles.titleLarge,
+      iconTheme: const IconThemeData(color: AppColors.onSurface),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.secondary,
+      unselectedItemColor: AppColors.onSurfaceVariant,
       type: BottomNavigationBarType.fixed,
+      elevation: 0,
     ),
     cardTheme: const CardThemeData(
       color: AppColors.surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderRadius: BorderRadius.all(Radius.circular(24)),
       ),
     ),
-    textTheme: TextTheme(bodyMedium: AppTextStyles.translation),
+    textTheme: const TextTheme(bodyMedium: AppTextStyles.bodyMedium),
   );
 }
