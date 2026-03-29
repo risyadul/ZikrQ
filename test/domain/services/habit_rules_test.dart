@@ -128,6 +128,23 @@ void main() {
       expect(sorted.map((task) => task.id), ['c', 'b', 'a']);
     });
 
+    test('ReviewTask.copyWith can explicitly clear lastReviewedAt', () {
+      final task = ReviewTask(
+        id: 'task-1',
+        surahId: 1,
+        source: ReviewTaskSource.manual,
+        scheduledDate: DateTime(2026, 3, 30),
+        lastReviewedAt: DateTime(2026, 3, 29),
+        priorityScore: 50,
+        updatedAt: DateTime(2026, 3, 30),
+        localChangeVersion: 1,
+      );
+
+      final cleared = task.copyWith(lastReviewedAt: null);
+
+      expect(cleared.lastReviewedAt, isNull);
+    });
+
     test('local day-boundary rollover happens at 00:00', () {
       final beforeMidnight = DateTime(2026, 3, 30, 23, 59);
       final atMidnight = DateTime(2026, 3, 31, 0, 0);

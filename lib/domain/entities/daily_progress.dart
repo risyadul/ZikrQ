@@ -11,6 +11,7 @@ class DailyProgress {
     required this.localChangeVersion,
   });
 
+  /// Local calendar date represented at the local day boundary (00:00).
   final DateTime date;
   final int completedAyat;
   final int targetAyat;

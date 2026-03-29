@@ -14,6 +14,8 @@ class HabitPlan {
   }) : activeDays = List<int>.unmodifiable(activeDays);
 
   final int dailyTargetAyat;
+
+  /// Active weekdays using ISO weekday values: 1 (Monday) to 7 (Sunday).
   final List<int> activeDays;
   final bool reminderEnabled;
   final int reminderHour;

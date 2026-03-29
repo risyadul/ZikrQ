@@ -12,6 +12,7 @@ class TodayDashboard {
     this.progress,
   }) : reviewQueue = List<ReviewTask>.unmodifiable(reviewQueue);
 
+  /// Local calendar date represented at the local day boundary (00:00).
   final DateTime date;
   final HabitPlan plan;
   final DailyProgress? progress;

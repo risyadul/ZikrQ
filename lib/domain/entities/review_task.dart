@@ -2,6 +2,8 @@ import 'package:meta/meta.dart';
 
 enum ReviewTaskSource { needsReview, streakRecovery, manual }
 
+const Object _lastReviewedAtNotSet = Object();
+
 @immutable
 class ReviewTask {
   const ReviewTask({
@@ -29,7 +31,7 @@ class ReviewTask {
     int? surahId,
     ReviewTaskSource? source,
     DateTime? scheduledDate,
-    DateTime? lastReviewedAt,
+    Object? lastReviewedAt = _lastReviewedAtNotSet,
     int? priorityScore,
     DateTime? updatedAt,
     int? localChangeVersion,
@@ -38,7 +40,9 @@ class ReviewTask {
     surahId: surahId ?? this.surahId,
     source: source ?? this.source,
     scheduledDate: scheduledDate ?? this.scheduledDate,
-    lastReviewedAt: lastReviewedAt ?? this.lastReviewedAt,
+    lastReviewedAt: identical(lastReviewedAt, _lastReviewedAtNotSet)
+        ? this.lastReviewedAt
+        : lastReviewedAt as DateTime?,
     priorityScore: priorityScore ?? this.priorityScore,
     updatedAt: updatedAt ?? this.updatedAt,
     localChangeVersion: localChangeVersion ?? this.localChangeVersion,
