@@ -1,6 +1,9 @@
 // lib/presentation/widgets/surah_tile.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:zikrq/core/theme/app_colors.dart';
 import 'package:zikrq/core/theme/app_text_styles.dart';
 import 'package:zikrq/domain/entities/surah.dart';
@@ -31,14 +34,12 @@ class _SurahTileState extends State<SurahTile> {
 
   void _onHorizontalDragEnd(DragEndDetails details) {
     if (_dragOffset <= -_swipeThreshold) {
-      HapticFeedback.lightImpact();
+      unawaited(HapticFeedback.lightImpact());
       _resetDrag();
       showModalBottomSheet<void>(
         context: context,
-        backgroundColor: AppColors.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
         builder: (_) => StatusBottomSheet(
           surahId: widget.surah.id,
           currentStatus: widget.surah.status,
@@ -49,9 +50,7 @@ class _SurahTileState extends State<SurahTile> {
     }
   }
 
-  void _resetDrag() {
-    setState(() => _dragOffset = 0);
-  }
+  void _resetDrag() => setState(() => _dragOffset = 0);
 
   @override
   Widget build(BuildContext context) {
@@ -61,57 +60,54 @@ class _SurahTileState extends State<SurahTile> {
       child: Stack(
         alignment: Alignment.centerRight,
         children: [
-          // Swipe hint icon revealed on the right
+          // Swipe hint icon
           Opacity(
             opacity: (-_dragOffset / _swipeThreshold).clamp(0.0, 1.0),
-            child: Container(
+            child: const SizedBox(
               width: 48,
               height: 48,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.edit_outlined,
-                color: AppColors.primary,
-                size: 22,
+              child: Center(
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ),
             ),
           ),
-          // Main tile content, slides left
+          // Main tile
           Transform.translate(
             offset: Offset(_dragOffset, 0),
             child: Material(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(24),
               child: InkWell(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(24),
                 onTap: widget.onTap,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
+                  padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      // Surah number badge
+                      // Number badge
                       Container(
-                        width: 36,
-                        height: 36,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.4),
-                          ),
-                          borderRadius: BorderRadius.circular(6),
+                          color: AppColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           '${widget.surah.id}',
                           style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Poppins',
+                            color: AppColors.onSurfaceVariant,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       // Name + meta
                       Expanded(
                         child: Column(
@@ -119,28 +115,52 @@ class _SurahTileState extends State<SurahTile> {
                           children: [
                             Text(
                               widget.surah.name,
-                              style: AppTextStyles.surahName,
+                              style: AppTextStyles.titleMedium,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${widget.surah.totalVerses} ayat · Juz ${widget.surah.juzStart}',
-                              style: AppTextStyles.surahMeta,
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text(
+                                  '${widget.surah.totalVerses} Ayat',
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.onSurfaceVariant,
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 3,
+                                  height: 3,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.onSurfaceVariant,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                StatusBadge(status: widget.surah.status),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       // Arabic name
                       Text(
                         widget.surah.nameArabic,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: AppColors.onSurface,
-                          fontFamily: 'Scheherazade New',
-                        ),
+                        style: AppTextStyles.arabicList,
                       ),
-                      const SizedBox(width: 10),
-                      StatusBadge(status: widget.surah.status),
+                      const SizedBox(width: 12),
+                      // Status icon (bookmark-style)
+                      Icon(
+                        Icons.bookmark_outline,
+                        color: AppColors.onSurfaceVariant.withValues(
+                          alpha: 0.5,
+                        ),
+                        size: 18,
+                      ),
                     ],
                   ),
                 ),
