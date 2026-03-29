@@ -2,12 +2,31 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const background = Color(0xFF0F1F1A);
-  static const surface = Color(0xFF1A3328);
-  static const primary = Color(0xFFC9A84C);
-  static const onSurface = Color(0xFFE8D5A3);
-  static const secondary = Color(0xFF8AB5A0);
-  static const needsReview = Color(0xFFE88080);
-  static const inProgress = Color(0xFF4A8A64);
-  static const notStarted = Color(0xFF3A5A4A);
+  // Background hierarchy
+  static const background = Color(0xFF111125);
+  static const surface = Color(0xFF1A1A2E);
+  static const surfaceDark = Color(0xFF0C0C1F);
+  static const surfaceElevated = Color(0xFF28283D);
+  static const surfaceMuted = Color(0xFF333348);
+
+  // Accent purple
+  static const primary = Color(0xFFBFC4ED);
+  static const primaryBright = Color(0xFFC0C2F9);
+
+  // Text
+  static const onSurface = Color(0xFFE2E0FC);
+  static const onSurfaceVariant = Color(0xFFC8C5CD);
+
+  // Status
+  static const secondary = Color(0xFFBFC4ED); // memorized
+  static const inProgress = Color(0xFFC0C2F9);
+  static const needsReview = Color(0xFFFFB4AB);
+  static const notStarted = Color(0xFF929097);
+
+  // Nav surfaces (use with .withValues at call site)
+  // navBar rgba(26,26,46,0.7) → Color(0xFF1A1A2E) withValues(alpha: 0.7)
+  static const navBarBase = Color(0xFF1A1A2E);
+
+  // Card stroke rgba(71,70,76,0.15)
+  static const outlineBase = Color(0xFF47464C);
 }
