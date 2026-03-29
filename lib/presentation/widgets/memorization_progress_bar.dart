@@ -1,12 +1,13 @@
 // lib/presentation/widgets/memorization_progress_bar.dart
 import 'package:flutter/material.dart';
+
 import 'package:zikrq/core/theme/app_colors.dart';
 
 class MemorizationProgressBar extends StatelessWidget {
   const MemorizationProgressBar({
     required this.value, // 0.0 to 1.0
     super.key,
-    this.height = 6,
+    this.height = 12,
   });
 
   final double value;
@@ -14,18 +15,32 @@ class MemorizationProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: value.clamp(0.0, 1.0)),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-      builder: (context, animatedValue, _) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final clampedValue = value.clamp(0.0, 1.0);
+        final filledWidth = constraints.maxWidth * clampedValue;
         return ClipRRect(
           borderRadius: BorderRadius.circular(height),
-          child: LinearProgressIndicator(
-            value: animatedValue,
-            backgroundColor: AppColors.notStarted.withValues(alpha: 0.4),
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-            minHeight: height,
+          child: SizedBox(
+            height: height,
+            child: Stack(
+              children: [
+                // Track
+                Container(
+                  width: double.infinity,
+                  color: AppColors.surfaceElevated,
+                ),
+                // Fill with gradient
+                Container(
+                  width: filledWidth,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFC6C6C6), AppColors.primary],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
