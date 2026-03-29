@@ -1,6 +1,9 @@
 // lib/presentation/pages/surah_detail/surah_detail_page.dart
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:zikrq/core/theme/app_colors.dart';
 import 'package:zikrq/core/theme/app_text_styles.dart';
 import 'package:zikrq/domain/entities/memorization_status.dart';
@@ -37,10 +40,8 @@ class _SurahDetailPageState extends ConsumerState<SurahDetailPage> {
   ) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (_) => StatusBottomSheet(
         surahId: widget.surahId,
         currentStatus: currentStatus,
@@ -53,7 +54,6 @@ class _SurahDetailPageState extends ConsumerState<SurahDetailPage> {
     final versesAsync = ref.watch(surahDetailProvider(widget.surahId));
     final surahListAsync = ref.watch(surahListProvider);
 
-    // Find the current surah for title and status display
     Surah? surah;
     final surahList = surahListAsync.valueOrNull;
     if (surahList != null) {
@@ -62,58 +62,101 @@ class _SurahDetailPageState extends ConsumerState<SurahDetailPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: surah == null
-            ? const Text('Surah')
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(surah.name),
-                  Text(
-                    surah.nameArabic,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.secondary,
-                      fontFamily: 'Scheherazade New',
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: AppBar(
+              backgroundColor: AppColors.navBarBase.withValues(alpha: 0.7),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: const BackButton(color: AppColors.onSurface),
+              title: surah == null
+                  ? const Text('Surah', style: AppTextStyles.titleLarge)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(surah.name, style: AppTextStyles.titleLarge),
+                        Text(
+                          surah.nameArabic,
+                          style: AppTextStyles.arabicAppBar,
+                        ),
+                      ],
                     ),
+              actions: [
+                if (surah != null) ...[
+                  GestureDetector(
+                    onTap: () => _showStatusSheet(context, surah!.status),
+                    child: StatusBadge(status: surah.status),
                   ),
+                  const SizedBox(width: 16),
                 ],
-              ),
-        actions: [
-          if (surah != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: GestureDetector(
-                onTap: () => _showStatusSheet(context, surah!.status),
-                child: StatusBadge(status: surah.status),
-              ),
+              ],
             ),
-        ],
+          ),
+        ),
       ),
       body: versesAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
         error: (e, _) =>
-            Center(child: Text('Error: $e', style: AppTextStyles.surahMeta)),
+            Center(child: Text('Error: $e', style: AppTextStyles.bodySmall)),
         data: (versesWithMark) => ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: versesWithMark.length + 1, // +1 for bismillah header
+          padding: const EdgeInsets.fromLTRB(24, 96, 24, 128),
+          itemCount: versesWithMark.length + 1,
           itemBuilder: (context, index) {
-            // Bismillah header (skip for Surah 1 and Surah 9)
             if (index == 0) {
+              // Bismillah header — skip for Surah 1 and 9
               if (widget.surahId == 9 || widget.surahId == 1) {
-                return const SizedBox.shrink();
+                return const SizedBox(height: 24);
               }
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.arabicVerse.copyWith(
-                    color: AppColors.primary,
-                    fontSize: 20,
-                  ),
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: Column(
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFFC6C6C6), AppColors.primary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds),
+                      child: Text(
+                        'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.arabicBismillah.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0),
+                            AppColors.primary.withValues(alpha: 0.4),
+                            AppColors.primary.withValues(alpha: 0),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'IN THE NAME OF ALLAH, THE MOST GRACIOUS, THE MOST MERCIFUL',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 1,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               );
             }
