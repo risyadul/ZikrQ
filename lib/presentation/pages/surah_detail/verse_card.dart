@@ -1,5 +1,6 @@
 // lib/presentation/pages/surah_detail/verse_card.dart
 import 'package:flutter/material.dart';
+
 import 'package:zikrq/core/theme/app_colors.dart';
 import 'package:zikrq/core/theme/app_text_styles.dart';
 import 'package:zikrq/domain/entities/verse_with_mark.dart';
@@ -19,69 +20,80 @@ class VerseCard extends StatelessWidget {
     final verse = verseWithMark.verse;
     final isMarked = verseWithMark.isMarked;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
+        color: isMarked ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(40),
         border: isMarked
-            ? Border.all(color: AppColors.primary.withValues(alpha: 0.4))
-            : null,
+            ? Border.all(color: AppColors.primary.withValues(alpha: 0.2))
+            : Border.all(color: AppColors.outlineBase.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Arabic text
-          Text(
-            verse.arabic,
-            textAlign: TextAlign.right,
-            style: AppTextStyles.arabicVerse,
-          ),
-          const SizedBox(height: 10),
-          // Divider
-          const Divider(color: AppColors.notStarted, height: 1),
-          const SizedBox(height: 10),
-          // Translation + controls
+          // Top row: verse number badge + bookmark
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Verse number
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.notStarted.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(6),
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                alignment: Alignment.center,
                 child: Text(
                   '${verse.number}',
                   style: const TextStyle(
-                    color: AppColors.secondary,
-                    fontSize: 11,
+                    fontFamily: 'Poppins',
+                    color: AppColors.onSurface,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              // Translation
-              Expanded(
-                child: Text(
-                  verse.translation,
-                  style: AppTextStyles.translation,
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Mark toggle
+              const Spacer(),
               GestureDetector(
                 onTap: onToggleMark,
                 child: Icon(
                   isMarked ? Icons.bookmark : Icons.bookmark_outline,
-                  color: isMarked ? AppColors.primary : AppColors.secondary,
-                  size: 20,
+                  color: isMarked
+                      ? AppColors.primary
+                      : AppColors.onSurfaceVariant,
+                  size: 22,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 32),
+          // Arabic text — RTL right-aligned
+          Text(
+            verse.arabic,
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+            style: AppTextStyles.arabicVerse,
+          ),
+          const SizedBox(height: 24),
+          // Horizontal divider (gradient fade)
+          Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: 0),
+                  AppColors.primary.withValues(alpha: 0.3),
+                  AppColors.primary.withValues(alpha: 0),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Translation
+          Text(verse.translation, style: AppTextStyles.translation),
         ],
       ),
     );
