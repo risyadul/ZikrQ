@@ -6,21 +6,33 @@ import 'package:zikrq/domain/services/habit_rules.dart';
 void main() {
   group('HabitRules', () {
     test('suggested target caps at 150% of base', () {
-      final result = HabitRules.suggestedTargetAyat(10, 99);
+      final result = HabitRules.suggestedTargetAyat(
+        dailyTargetAyat: 10,
+        missedActiveDays: 99,
+      );
 
       expect(result, 15);
     });
 
+    test('suggested target applies recovery boost before cap', () {
+      final result = HabitRules.suggestedTargetAyat(
+        dailyTargetAyat: 10,
+        missedActiveDays: 2,
+      );
+
+      expect(result, 14);
+    });
+
     test('needsReview score is higher than inProgress score', () {
       final needsReview = HabitRules.priorityScore(
-        MemorizationStatus.needsReview,
-        5,
-        false,
+        status: MemorizationStatus.needsReview,
+        daysSinceLastReviewed: 5,
+        isRecoveryTask: false,
       );
       final inProgress = HabitRules.priorityScore(
-        MemorizationStatus.inProgress,
-        5,
-        false,
+        status: MemorizationStatus.inProgress,
+        daysSinceLastReviewed: 5,
+        isRecoveryTask: false,
       );
 
       expect(needsReview, greaterThan(inProgress));
@@ -34,8 +46,23 @@ void main() {
     });
 
     test('recovery weight true is 15 and false is 0', () {
-      expect(HabitRules.recoveryWeight(true), 15);
-      expect(HabitRules.recoveryWeight(false), 0);
+      expect(HabitRules.recoveryWeight(isRecoveryTask: true), 15);
+      expect(HabitRules.recoveryWeight(isRecoveryTask: false), 0);
+    });
+
+    test('recency contribution uses non-capped slope of 2 per day', () {
+      final base = HabitRules.priorityScore(
+        status: MemorizationStatus.inProgress,
+        daysSinceLastReviewed: 0,
+        isRecoveryTask: false,
+      );
+      final fiveDays = HabitRules.priorityScore(
+        status: MemorizationStatus.inProgress,
+        daysSinceLastReviewed: 5,
+        isRecoveryTask: false,
+      );
+
+      expect(fiveDays - base, 10);
     });
 
     test(
@@ -49,14 +76,14 @@ void main() {
 
     test('recency contribution is capped at 30', () {
       final atCap = HabitRules.priorityScore(
-        MemorizationStatus.inProgress,
-        30,
-        false,
+        status: MemorizationStatus.inProgress,
+        daysSinceLastReviewed: 15,
+        isRecoveryTask: false,
       );
       final aboveCap = HabitRules.priorityScore(
-        MemorizationStatus.inProgress,
-        365,
-        false,
+        status: MemorizationStatus.inProgress,
+        daysSinceLastReviewed: 365,
+        isRecoveryTask: false,
       );
 
       expect(aboveCap, atCap);

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:zikrq/domain/entities/memorization_status.dart';
 import 'package:zikrq/domain/entities/review_task.dart';
 
@@ -10,32 +12,33 @@ class HabitRules {
   static const int recoveryBonusWeight = 15;
   static const int recencyCap = 30;
 
-  static int suggestedTargetAyat(int dailyTargetAyat, int missedActiveDays) {
+  static int suggestedTargetAyat({
+    required int dailyTargetAyat,
+    required int missedActiveDays,
+  }) {
     if (dailyTargetAyat <= 0) {
       return 0;
     }
 
-    final missed = missedActiveDays < 0 ? 0 : missedActiveDays;
-    final maxTarget = (dailyTargetAyat * 3) ~/ 2;
-    final suggested = dailyTargetAyat + missed;
-    return suggested > maxTarget ? maxTarget : suggested;
+    final missed = math.max(0, missedActiveDays);
+    final recoveryBoost = math.min(5, missed * 2);
+    final suggested = dailyTargetAyat + recoveryBoost;
+    final maxTarget = ((dailyTargetAyat * 3) + 1) ~/ 2;
+
+    return math.min(suggested, maxTarget);
   }
 
-  static int priorityScore(
-    MemorizationStatus status,
-    int daysSinceLastReviewed,
-    bool isRecoveryTask,
-  ) {
-    final recencyContribution = daysSinceLastReviewed < 0
-        ? 0
-        : daysSinceLastReviewed;
-    final boundedRecency = recencyContribution > recencyCap
-        ? recencyCap
-        : recencyContribution;
+  static int priorityScore({
+    required MemorizationStatus status,
+    required int daysSinceLastReviewed,
+    required bool isRecoveryTask,
+  }) {
+    final recencyWeight = math.max(0, daysSinceLastReviewed) * 2;
+    final boundedRecency = math.min(recencyCap, recencyWeight);
 
     return statusWeight(status) +
         boundedRecency +
-        recoveryWeight(isRecoveryTask);
+        recoveryWeight(isRecoveryTask: isRecoveryTask);
   }
 
   static int statusWeight(MemorizationStatus status) {
@@ -47,7 +50,7 @@ class HabitRules {
     };
   }
 
-  static int recoveryWeight(bool isRecoveryTask) {
+  static int recoveryWeight({required bool isRecoveryTask}) {
     return isRecoveryTask ? recoveryBonusWeight : 0;
   }
 
