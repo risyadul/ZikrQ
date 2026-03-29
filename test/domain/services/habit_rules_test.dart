@@ -98,6 +98,8 @@ void main() {
           scheduledDate: DateTime(2026, 3, 30),
           lastReviewedAt: DateTime(2026, 3, 28),
           priorityScore: 80,
+          updatedAt: DateTime(2026, 3, 30),
+          localChangeVersion: 1,
         ),
         ReviewTask(
           id: 'b',
@@ -106,6 +108,8 @@ void main() {
           scheduledDate: DateTime(2026, 3, 30),
           lastReviewedAt: DateTime(2026, 3, 27),
           priorityScore: 80,
+          updatedAt: DateTime(2026, 3, 30),
+          localChangeVersion: 1,
         ),
         ReviewTask(
           id: 'c',
@@ -114,6 +118,8 @@ void main() {
           scheduledDate: DateTime(2026, 3, 30),
           lastReviewedAt: DateTime(2026, 3, 27),
           priorityScore: 80,
+          updatedAt: DateTime(2026, 3, 30),
+          localChangeVersion: 1,
         ),
       ];
 
