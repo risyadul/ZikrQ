@@ -6,13 +6,11 @@ part 'review_task_model.g.dart';
 class ReviewTaskModel {
   Id id = Isar.autoIncrement;
 
-  @Index(composite: [CompositeIndex('verseNumber')], unique: true)
+  late String taskId;
   late int surahId;
-
-  late int verseNumber;
-  late DateTime scheduledFor;
-  late bool isCompleted;
-  DateTime? completedAt;
+  late int priorityScore;
+  late DateTime scheduledDate;
+  late int source;
   late DateTime updatedAt;
   late int localChangeVersion;
 }

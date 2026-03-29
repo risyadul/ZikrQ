@@ -7,7 +7,7 @@ class HabitPlanModel {
   Id id = Isar.autoIncrement;
 
   late int dailyTargetAyat;
-  List<int> activeDays = [];
+  late List<int> activeDays;
   late bool reminderEnabled;
   late int reminderHour;
   late int reminderMinute;
