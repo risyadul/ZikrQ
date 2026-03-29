@@ -9,7 +9,11 @@ import 'package:zikrq/data/datasources/local/memorization_local_datasource.dart'
 import 'package:zikrq/data/datasources/local/quran_local_datasource.dart';
 import 'package:zikrq/data/models/marked_verse_record_model.dart';
 import 'package:zikrq/data/models/memorization_record_model.dart';
+import 'package:zikrq/data/models/daily_progress_model.dart';
+import 'package:zikrq/data/models/habit_plan_model.dart';
+import 'package:zikrq/data/models/review_task_model.dart';
 import 'package:zikrq/data/models/surah_model.dart';
+import 'package:zikrq/data/models/user_preference_model.dart';
 import 'package:zikrq/data/models/verse_model.dart';
 import 'package:zikrq/data/repositories/quran_repository_impl.dart';
 import 'package:zikrq/domain/usecases/seed_initial_data.dart';
@@ -25,6 +29,10 @@ Future<void> main() async {
     VerseModelSchema,
     MemorizationRecordModelSchema,
     MarkedVerseRecordModelSchema,
+    HabitPlanModelSchema,
+    DailyProgressModelSchema,
+    ReviewTaskModelSchema,
+    UserPreferenceModelSchema,
   ], directory: dir.path);
 
   // Seed initial data once before the UI starts
