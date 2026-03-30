@@ -5,6 +5,7 @@ import 'package:zikrq/data/models/habit_plan_model.dart';
 import 'package:zikrq/data/models/user_preference_model.dart';
 import 'package:zikrq/domain/entities/daily_progress.dart';
 import 'package:zikrq/domain/entities/habit_plan.dart';
+import 'package:zikrq/domain/entities/memorization_status.dart';
 import 'package:zikrq/domain/entities/user_preference.dart';
 import 'package:zikrq/domain/repositories/habit_repository.dart';
 
@@ -99,6 +100,9 @@ class HabitRepositoryImpl implements HabitRepository {
             preference.notificationsPermissionRequested
         ..soundEnabled = preference.soundEnabled
         ..vibrationEnabled = preference.vibrationEnabled
+        ..snoozeMinutes = preference.snoozeMinutes
+        ..defaultQuickAction = preference.defaultQuickAction.index
+        ..hapticEnabled = preference.hapticEnabled
         ..updatedAt = preference.updatedAt
         ..localChangeVersion = preference.localChangeVersion;
 
@@ -109,6 +113,9 @@ class HabitRepositoryImpl implements HabitRepository {
             model.notificationsPermissionRequested,
         soundEnabled: model.soundEnabled,
         vibrationEnabled: model.vibrationEnabled,
+        snoozeMinutes: model.snoozeMinutes,
+        defaultQuickAction: _toMemorizationStatus(model.defaultQuickAction),
+        hapticEnabled: model.hapticEnabled,
         updatedAt: model.updatedAt,
         localChangeVersion: model.localChangeVersion,
       );
@@ -129,9 +136,19 @@ class HabitRepositoryImpl implements HabitRepository {
     notificationsPermissionRequested: false,
     soundEnabled: true,
     vibrationEnabled: true,
+    snoozeMinutes: 10,
+    defaultQuickAction: MemorizationStatus.inProgress,
+    hapticEnabled: true,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
     localChangeVersion: 0,
   );
+
+  static MemorizationStatus _toMemorizationStatus(int index) {
+    if (index < 0 || index >= MemorizationStatus.values.length) {
+      return MemorizationStatus.inProgress;
+    }
+    return MemorizationStatus.values[index];
+  }
 
   static DateTime _localDate(DateTime date) {
     final local = date.toLocal();

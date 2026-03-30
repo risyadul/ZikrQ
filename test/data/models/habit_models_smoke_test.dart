@@ -38,6 +38,9 @@ void main() {
       ..notificationsPermissionRequested = true
       ..soundEnabled = true
       ..vibrationEnabled = false
+      ..snoozeMinutes = 10
+      ..defaultQuickAction = 1
+      ..hapticEnabled = true
       ..updatedAt = DateTime(2026, 3, 30, 12)
       ..localChangeVersion = 4;
 

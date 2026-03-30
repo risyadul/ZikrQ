@@ -6,7 +6,7 @@ class MainShell extends StatelessWidget {
   const MainShell({required this.child, super.key});
   final Widget child;
 
-  static const _tabs = ['/', '/surahs', '/stats'];
+  static const _tabs = ['/', '/surahs', '/stats', '/settings'];
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
@@ -36,6 +36,11 @@ class MainShell extends StatelessWidget {
             icon: Icon(Icons.bar_chart_outlined),
             activeIcon: Icon(Icons.bar_chart),
             label: 'Statistik',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: 'Pengaturan',
           ),
         ],
       ),
