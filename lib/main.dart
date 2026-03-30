@@ -44,7 +44,13 @@ Future<void> main() async {
   await SeedInitialDataUseCase(repo)();
 
   final localNotificationService = LocalNotificationService();
-  await localNotificationService.initialize();
+  try {
+    await localNotificationService.initialize();
+  } catch (error, stackTrace) {
+    debugPrint(
+      'LocalNotificationService initialization failed: $error\n$stackTrace',
+    );
+  }
 
   runApp(
     ProviderScope(
