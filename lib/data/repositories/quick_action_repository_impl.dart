@@ -32,6 +32,16 @@ class QuickActionRepositoryImpl implements QuickActionRepository {
     _cachedLastUsedStatusAction = status;
   }
 
+  @override
+  Future<void> applyStatusToSurah({
+    required int surahId,
+    required MemorizationStatus status,
+  }) async {
+    await _memorizationDatasource.updateStatus(surahId, status.index);
+    await setLastUsedStatusAction(status);
+  }
+
+  @override
   Future<void> applyStatusToSurahs({
     required List<int> surahIds,
     required MemorizationStatus status,
