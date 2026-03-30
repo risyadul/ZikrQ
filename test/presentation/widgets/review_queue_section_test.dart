@@ -61,4 +61,22 @@ void main() {
 
     expect(tapped, queueItem);
   });
+
+  testWidgets('ReviewQueueSection returns empty widget when queue is empty', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ReviewQueueSection(
+            queue: const [],
+            onQuickActionPressed: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Antrean Murajaah'), findsNothing);
+    expect(find.byType(SizedBox), findsOneWidget);
+  });
 }

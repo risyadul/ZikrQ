@@ -20,7 +20,7 @@ class HabitTargetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final safeTarget = targetAyat <= 0 ? 1 : targetAyat;
-    final progress = completedAyat / safeTarget;
+    final progress = (completedAyat / safeTarget).clamp(0.0, 1.0).toDouble();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -37,7 +37,7 @@ class HabitTargetCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '$completedAyat / $targetAyat ayat',
+                  '$completedAyat / $safeTarget ayat',
                   style: AppTextStyles.headline.copyWith(fontSize: 20),
                 ),
               ),
