@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zikrq/data/models/daily_progress_model.dart';
 import 'package:zikrq/data/models/habit_plan_model.dart';
+import 'package:zikrq/data/models/memorization_record_model.dart';
 import 'package:zikrq/data/models/review_task_model.dart';
 import 'package:zikrq/data/models/user_preference_model.dart';
 
@@ -45,9 +46,17 @@ void main() {
       ..updatedAt = DateTime(2026, 3, 30, 12)
       ..localChangeVersion = 4;
 
+    final memorizationRecord = MemorizationRecordModel()
+      ..surahId = 1
+      ..statusIndex = 0
+      ..updatedAt = DateTime(2026, 3, 30, 12)
+      ..lastAccessedAt = DateTime(2026, 3, 30, 12)
+      ..localChangeVersion = 1;
+
     expect(habitPlan.dailyTargetAyat, 5);
     expect(dailyProgress.targetAyat, 5);
     expect(reviewTask.taskId, 'rt-1');
     expect(preference.onboardingCompleted, isTrue);
+    expect(memorizationRecord.localChangeVersion, 1);
   });
 }

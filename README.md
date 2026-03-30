@@ -12,6 +12,12 @@ A Quran memorization tracker for Android and iOS. Built with Flutter using Clean
 - **Statistics** — overall memorization progress summary
 - **Recently accessed** — last opened surahs shown on the Home screen
 - **Review reminders** — surahs marked Needs Review are highlighted on Home
+- **Daily habit dashboard** — target ayat, today's progress, and focused review queue
+- **Quick status actions** — long-press surah tile for one-tap status update
+- **Bulk update mode** — apply a status to multiple selected surahs at once
+- **Personalized settings** — daily target, active days, default quick action, haptic/sound
+- **Local reminder notifications** — configurable schedule with permission-aware flow
+- **Sync-ready local metadata** — local change versions persisted for future cloud sync
 - Search and filter surahs by status
 - Swipe-left gesture on a surah tile to change its status directly from the list
 - Fully offline — no network requests whatsoever
