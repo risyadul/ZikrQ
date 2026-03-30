@@ -5,9 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:zikrq/core/constants/app_constants.dart';
 import 'package:zikrq/core/theme/app_colors.dart';
 import 'package:zikrq/core/theme/app_text_styles.dart';
+import 'package:zikrq/domain/entities/memorization_status.dart';
+import 'package:zikrq/presentation/providers/habit_provider.dart';
 import 'package:zikrq/presentation/providers/home_provider.dart';
+import 'package:zikrq/presentation/providers/quick_action_provider.dart';
 import 'package:zikrq/presentation/providers/stats_provider.dart';
+import 'package:zikrq/presentation/widgets/habit_target_card.dart';
 import 'package:zikrq/presentation/widgets/memorization_progress_bar.dart';
+import 'package:zikrq/presentation/widgets/review_queue_section.dart';
 import 'package:zikrq/presentation/widgets/surah_tile.dart';
 
 class HomePage extends ConsumerWidget {
@@ -18,6 +23,8 @@ class HomePage extends ConsumerWidget {
     final statsAsync = ref.watch(memorizationStatsProvider);
     final recentAsync = ref.watch(recentlyAccessedProvider);
     final needsReviewAsync = ref.watch(needsReviewProvider);
+    final dashboardAsync = ref.watch(todayDashboardProvider);
+    final quickActionState = ref.watch(quickActionProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -30,11 +37,68 @@ class HomePage extends ConsumerWidget {
           ref
             ..invalidate(memorizationStatsProvider)
             ..invalidate(recentlyAccessedProvider)
-            ..invalidate(needsReviewProvider);
+            ..invalidate(needsReviewProvider)
+            ..invalidate(todayDashboardProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            dashboardAsync.when(
+              loading: () => const SizedBox(
+                height: 140,
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              ),
+              error: (e, _) => Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Gagal memuat dashboard harian',
+                  style: AppTextStyles.surahMeta,
+                ),
+              ),
+              data: (dashboard) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HabitTargetCard(
+                    targetAyat: dashboard.targetAyat,
+                    completedAyat: dashboard.completedAyat,
+                    streakDays: dashboard.plan.activeDays.length,
+                    onContinueMurajaah: () {
+                      if (dashboard.reviewQueue.isEmpty) {
+                        context.push('/surahs');
+                        return;
+                      }
+                      context.push(
+                        '/surahs/${dashboard.reviewQueue.first.surahId}',
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  ReviewQueueSection(
+                    queue: dashboard.reviewQueue,
+                    onQuickActionPressed: (task) {
+                      ref
+                          .read(quickActionProvider.notifier)
+                          .updateSingle(
+                            surahId: task.surahId,
+                            status: MemorizationStatus.inProgress,
+                          );
+                    },
+                  ),
+                  if (quickActionState.isLoading) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(color: AppColors.primary),
+                  ],
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+
             // Progress card
             statsAsync.when(
               loading: () => const SizedBox(
