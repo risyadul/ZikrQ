@@ -81,15 +81,10 @@ class ReviewQueueRepositoryImpl implements ReviewQueueRepository {
   Future<void> completeTaskAction({
     required String taskId,
     required MemorizationStatus nextStatus,
-  }) async {
-    final task = await _habitDatasource.getTaskByTaskId(taskId);
-    if (task == null) {
-      return;
-    }
-
-    await _memorizationDatasource.updateStatus(task.surahId, nextStatus.index);
-    await _habitDatasource.deleteTaskByTaskId(taskId);
-  }
+  }) => _habitDatasource.completeTaskActionTransactional(
+    taskId: taskId,
+    statusIndex: nextStatus.index,
+  );
 
   List<ReviewTask> _toEntities(List<ReviewTaskModel> models) {
     final tasks = models.map(_toEntity).toList();

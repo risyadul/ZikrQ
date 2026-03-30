@@ -1,6 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:zikrq/data/models/daily_progress_model.dart';
 import 'package:zikrq/data/models/habit_plan_model.dart';
+import 'package:zikrq/data/models/memorization_record_model.dart';
 import 'package:zikrq/data/models/review_task_model.dart';
 import 'package:zikrq/data/models/user_preference_model.dart';
 
@@ -101,6 +102,34 @@ class HabitLocalDatasource {
       if (task != null) {
         await _isar.reviewTaskModels.delete(task.id);
       }
+    });
+  }
+
+  Future<void> completeTaskActionTransactional({
+    required String taskId,
+    required int statusIndex,
+  }) async {
+    await _isar.writeTxn(() async {
+      final task = await _isar.reviewTaskModels
+          .filter()
+          .taskIdEqualTo(taskId)
+          .findFirst();
+      if (task == null) {
+        return;
+      }
+
+      final record = await _isar.memorizationRecordModels
+          .filter()
+          .surahIdEqualTo(task.surahId)
+          .findFirst();
+      if (record != null) {
+        record
+          ..statusIndex = statusIndex
+          ..updatedAt = DateTime.now();
+        await _isar.memorizationRecordModels.put(record);
+      }
+
+      await _isar.reviewTaskModels.delete(task.id);
     });
   }
 
