@@ -182,4 +182,107 @@ void main() {
     final formState = await container.read(settingsFormStateProvider.future);
     expect(formState.snoozeMinutes, 10);
   });
+
+  test(
+    'settings save with reminder enabled and denied permission skips scheduling',
+    () async {
+      final repository = MockHabitRepository();
+      final scheduler = MockReminderScheduler();
+
+      when(() => repository.getPlan()).thenAnswer((_) async => _plan());
+      when(
+        () => repository.getPreference(),
+      ).thenAnswer((_) async => _preference());
+      when(() => repository.savePlan(any())).thenAnswer((_) async {});
+      when(() => repository.savePreference(any())).thenAnswer((_) async {});
+      when(() => scheduler.requestPermission()).thenAnswer((_) async => false);
+
+      final container = ProviderContainer(
+        overrides: [
+          habitRepositoryProvider.overrideWithValue(repository),
+          reminderSchedulerProvider.overrideWithValue(scheduler),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(settingsSaveControllerProvider.notifier);
+      final result = await notifier.save(
+        const SettingsFormState(
+          dailyTargetAyat: 8,
+          activeDays: {1, 2, 3, 4, 5, 6, 7},
+          reminderEnabled: true,
+          reminderHour: 6,
+          reminderMinute: 15,
+          snoozeMinutes: 10,
+          defaultQuickAction: MemorizationStatus.memorized,
+          hapticEnabled: false,
+        ),
+      );
+
+      expect(result, ReminderPermissionRequestResult.deniedCanOpenSettings);
+      verify(() => scheduler.requestPermission()).called(1);
+      verifyNever(
+        () => scheduler.scheduleDailyReminder(
+          hour: any(named: 'hour'),
+          minute: any(named: 'minute'),
+          activeWeekdays: any(named: 'activeWeekdays'),
+        ),
+      );
+    },
+  );
+
+  test(
+    'settings save with reminder enabled and granted permission schedules reminder',
+    () async {
+      final repository = MockHabitRepository();
+      final scheduler = MockReminderScheduler();
+
+      when(() => repository.getPlan()).thenAnswer((_) async => _plan());
+      when(
+        () => repository.getPreference(),
+      ).thenAnswer((_) async => _preference());
+      when(() => repository.savePlan(any())).thenAnswer((_) async {});
+      when(() => repository.savePreference(any())).thenAnswer((_) async {});
+      when(() => scheduler.requestPermission()).thenAnswer((_) async => true);
+      when(
+        () => scheduler.scheduleDailyReminder(
+          hour: any(named: 'hour'),
+          minute: any(named: 'minute'),
+          activeWeekdays: any(named: 'activeWeekdays'),
+        ),
+      ).thenAnswer((_) async {});
+
+      final container = ProviderContainer(
+        overrides: [
+          habitRepositoryProvider.overrideWithValue(repository),
+          reminderSchedulerProvider.overrideWithValue(scheduler),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(settingsSaveControllerProvider.notifier);
+      final result = await notifier.save(
+        const SettingsFormState(
+          dailyTargetAyat: 8,
+          activeDays: {1, 2, 3, 4, 5, 6, 7},
+          reminderEnabled: true,
+          reminderHour: 6,
+          reminderMinute: 15,
+          snoozeMinutes: 10,
+          defaultQuickAction: MemorizationStatus.memorized,
+          hapticEnabled: false,
+        ),
+      );
+
+      expect(result, ReminderPermissionRequestResult.granted);
+      verify(() => scheduler.requestPermission()).called(1);
+      verify(
+        () => scheduler.scheduleDailyReminder(
+          hour: 6,
+          minute: 15,
+          activeWeekdays: {1, 2, 3, 4, 5, 6, 7},
+        ),
+      ).called(1);
+    },
+  );
 }

@@ -103,7 +103,7 @@ class ReminderPermissionController
 
   Future<ReminderPermissionRequestResult> request() async {
     final granted = await ref
-        .read(localNotificationServiceProvider)
+        .read(reminderSchedulerProvider)
         .requestPermission();
     final result = granted
         ? ReminderPermissionRequestResult.granted
@@ -165,11 +165,16 @@ class SettingsSaveController extends AsyncNotifier<void> {
       );
 
       if (updatedPlan.reminderEnabled) {
-        await reminderScheduler.scheduleDailyReminder(
-          hour: updatedPlan.reminderHour,
-          minute: updatedPlan.reminderMinute,
-          activeWeekdays: updatedPlan.activeDays.toSet(),
-        );
+        permissionResult = await ref
+            .read(reminderPermissionControllerProvider.notifier)
+            .request();
+        if (permissionResult == ReminderPermissionRequestResult.granted) {
+          await reminderScheduler.scheduleDailyReminder(
+            hour: updatedPlan.reminderHour,
+            minute: updatedPlan.reminderMinute,
+            activeWeekdays: updatedPlan.activeDays.toSet(),
+          );
+        }
       } else {
         await reminderScheduler.cancelAllReminders();
       }
@@ -185,12 +190,6 @@ class SettingsSaveController extends AsyncNotifier<void> {
           localChangeVersion: currentPreference.localChangeVersion + 1,
         ),
       );
-
-      if (state.reminderEnabled) {
-        permissionResult = await ref
-            .read(reminderPermissionControllerProvider.notifier)
-            .request();
-      }
     });
 
     if (this.state.hasError) {

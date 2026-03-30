@@ -232,7 +232,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 label: 'Buka Pengaturan',
                 onPressed: () {
                   ref
-                      .read(localNotificationServiceProvider)
+                      .read(reminderSchedulerProvider)
                       .openSystemNotificationSettings();
                 },
               ),
