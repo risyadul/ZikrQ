@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:zikrq/core/constants/app_constants.dart';
+import 'package:zikrq/core/services/local_notification_service.dart';
 import 'package:zikrq/core/theme/app_theme.dart';
 import 'package:zikrq/data/datasources/local/memorization_local_datasource.dart';
 import 'package:zikrq/data/datasources/local/quran_local_datasource.dart';
@@ -42,9 +43,17 @@ Future<void> main() async {
   );
   await SeedInitialDataUseCase(repo)();
 
+  final localNotificationService = LocalNotificationService();
+  await localNotificationService.initialize();
+
   runApp(
     ProviderScope(
-      overrides: [isarProvider.overrideWithValue(isar)],
+      overrides: [
+        isarProvider.overrideWithValue(isar),
+        localNotificationServiceProvider.overrideWithValue(
+          localNotificationService,
+        ),
+      ],
       child: const ZikrQApp(),
     ),
   );

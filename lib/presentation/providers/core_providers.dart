@@ -1,6 +1,7 @@
 // lib/presentation/providers/core_providers.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
+import 'package:zikrq/core/services/local_notification_service.dart';
 import 'package:zikrq/data/datasources/local/habit_local_datasource.dart';
 import 'package:zikrq/data/datasources/local/memorization_local_datasource.dart';
 import 'package:zikrq/data/datasources/local/quran_local_datasource.dart';
@@ -70,8 +71,12 @@ final quickActionRepositoryProvider = Provider<QuickActionRepository>(
   ),
 );
 
+final localNotificationServiceProvider = Provider<LocalNotificationService>(
+  (ref) => LocalNotificationService(),
+);
+
 final reminderSchedulerProvider = Provider<ReminderScheduler>(
-  (ref) => const _ReminderSchedulerPlaceholder(),
+  (ref) => ref.watch(localNotificationServiceProvider),
 );
 
 // Use cases
@@ -147,31 +152,3 @@ final rescheduleReminderUseCaseProvider = Provider<RescheduleReminderUseCase>(
     reminderScheduler: ref.watch(reminderSchedulerProvider),
   ),
 );
-
-class _ReminderSchedulerPlaceholder implements ReminderScheduler {
-  const _ReminderSchedulerPlaceholder();
-
-  @override
-  Future<void> cancelAllReminders() => throw UnimplementedError(
-    'ReminderScheduler concrete binding is provided in Task 6.',
-  );
-
-  @override
-  Future<void> openSystemNotificationSettings() => throw UnimplementedError(
-    'ReminderScheduler concrete binding is provided in Task 6.',
-  );
-
-  @override
-  Future<bool> requestPermission() => throw UnimplementedError(
-    'ReminderScheduler concrete binding is provided in Task 6.',
-  );
-
-  @override
-  Future<void> scheduleDailyReminder({
-    required int hour,
-    required int minute,
-    required Set<int> activeWeekdays,
-  }) => throw UnimplementedError(
-    'ReminderScheduler concrete binding is provided in Task 6.',
-  );
-}
