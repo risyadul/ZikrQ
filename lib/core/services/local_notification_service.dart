@@ -36,12 +36,24 @@ class LocalNotificationService implements ReminderScheduler {
     }
 
     _initializeTimeZones();
-    final timeZoneName = await _getLocalTimezone();
-    final location = tz.getLocation(timeZoneName);
+    final location = await _resolveLocalLocation();
     _setLocalLocation(location);
 
     await _gateway.initialize();
     _isInitialized = true;
+  }
+
+  Future<tz.Location> _resolveLocalLocation() async {
+    try {
+      final timeZoneName = await _getLocalTimezone();
+      return tz.getLocation(timeZoneName);
+    } catch (_) {
+      try {
+        return tz.getLocation('UTC');
+      } catch (_) {
+        return tz.local;
+      }
+    }
   }
 
   @override
@@ -203,7 +215,7 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
       body,
       scheduledDate,
       _details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,

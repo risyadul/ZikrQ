@@ -86,6 +86,47 @@ void main() {
         expect(gateway.requestPermissionCalls, 0);
       },
     );
+
+    test('initialize falls back to UTC when timezone lookup fails', () async {
+      tz.Location? configuredLocation;
+      final service = LocalNotificationService(
+        gateway: _FakeNotificationGateway(),
+        getLocalTimezone: () async => 'Invalid/Timezone',
+        initializeTimeZones: () {},
+        setLocalLocation: (location) {
+          configuredLocation = location;
+        },
+      );
+
+      await service.initialize();
+
+      expect(configuredLocation, isNotNull);
+      expect(configuredLocation!.name, 'UTC');
+    });
+
+    test(
+      'scheduleDailyReminder still schedules when timezone lookup fails',
+      () async {
+        final gateway = _FakeNotificationGateway();
+        final service = LocalNotificationService(
+          gateway: gateway,
+          getLocalTimezone: () async => 'Invalid/Timezone',
+          initializeTimeZones: () {},
+          setLocalLocation: tz.setLocalLocation,
+          now: () => tz.TZDateTime.utc(2026, 3, 30, 22, 0),
+        );
+
+        await service.scheduleDailyReminder(
+          hour: 21,
+          minute: 30,
+          activeWeekdays: const {3},
+        );
+
+        expect(gateway.scheduled.length, 1);
+        expect(gateway.scheduled.single.at.location.name, 'UTC');
+        expect(gateway.scheduled.single.at.weekday, DateTime.wednesday);
+      },
+    );
   });
 }
 
