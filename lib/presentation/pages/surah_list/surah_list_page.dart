@@ -75,11 +75,14 @@ class _SurahListPageState extends ConsumerState<SurahListPage> {
     final quickActionState = ref.watch(quickActionProvider);
 
     ref.listen<QuickActionOperationState>(quickActionProvider, (prev, next) {
-      if (prev?.isLoading == true && !next.isLoading && next.error == null) {
+      if (_isBulkMode &&
+          prev?.isLoading == true &&
+          !next.isLoading &&
+          next.error == null) {
         setState(() => _selectedSurahIds.clear());
       }
 
-      if (prev?.error != next.error && next.error != null) {
+      if (_isBulkMode && prev?.error != next.error && next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Quick action failed: ${next.error}')),
         );

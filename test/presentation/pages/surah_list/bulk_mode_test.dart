@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:zikrq/domain/entities/memorization_status.dart';
 import 'package:zikrq/domain/entities/surah.dart';
+import 'package:zikrq/domain/repositories/quick_action_repository.dart';
 import 'package:zikrq/domain/usecases/bulk_update_surah_status.dart';
 import 'package:zikrq/domain/usecases/quick_update_surah_status.dart';
 import 'package:zikrq/presentation/pages/surah_list/surah_list_page.dart';
@@ -17,6 +18,27 @@ class _MockBulkUpdateSurahStatusUseCase extends Mock
 
 class _MockQuickUpdateSurahStatusUseCase extends Mock
     implements QuickUpdateSurahStatusUseCase {}
+
+class _FakeQuickActionRepository implements QuickActionRepository {
+  @override
+  Future<MemorizationStatus?> getLastUsedStatusAction() async =>
+      MemorizationStatus.notStarted;
+
+  @override
+  Future<void> setLastUsedStatusAction(MemorizationStatus status) async {}
+
+  @override
+  Future<void> applyStatusToSurah({
+    required int surahId,
+    required MemorizationStatus status,
+  }) async {}
+
+  @override
+  Future<void> applyStatusToSurahs({
+    required List<int> surahIds,
+    required MemorizationStatus status,
+  }) async {}
+}
 
 void main() {
   setUpAll(() {
@@ -183,4 +205,69 @@ void main() {
     completer.complete();
     await tester.pumpAndSettle();
   });
+
+  testWidgets(
+    'page-level quick action error snackbar stays off outside bulk mode',
+    (tester) async {
+      final bulkUpdateUseCase = _MockBulkUpdateSurahStatusUseCase();
+      final quickUpdateUseCase = _MockQuickUpdateSurahStatusUseCase();
+      final fakeRepository = _FakeQuickActionRepository();
+
+      when(
+        () => bulkUpdateUseCase.call(
+          surahIds: any(named: 'surahIds'),
+          status: any(named: 'status'),
+        ),
+      ).thenAnswer((_) async {});
+
+      when(
+        () => quickUpdateUseCase.call(
+          surahId: any(named: 'surahId'),
+          status: any(named: 'status'),
+        ),
+      ).thenThrow(Exception('Update failed'));
+
+      final surahs = [
+        const Surah(
+          id: 1,
+          name: 'Al-Fatihah',
+          nameArabic: 'الفاتحة',
+          totalVerses: 7,
+          juzStart: 1,
+          revelation: 'Meccan',
+          status: MemorizationStatus.notStarted,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            surahListProvider.overrideWith((_) async => surahs),
+            quickActionRepositoryProvider.overrideWithValue(fakeRepository),
+            quickUpdateSurahStatusUseCaseProvider.overrideWithValue(
+              quickUpdateUseCase,
+            ),
+            bulkUpdateSurahStatusUseCaseProvider.overrideWithValue(
+              bulkUpdateUseCase,
+            ),
+          ],
+          child: const MaterialApp(home: SurahListPage()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.longPress(find.text('Al-Fatihah'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('quick-status-memorized')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Update failed'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Update failed'), findsNothing);
+    },
+  );
 }
