@@ -32,7 +32,10 @@ abstract final class AppRouter {
       GoRoute(
         path: '/surahs/:id',
         builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+          if (id == null || id < 1) {
+            return const SurahListPage();
+          }
           return SurahDetailPage(surahId: id);
         },
       ),

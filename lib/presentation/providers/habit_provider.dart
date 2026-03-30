@@ -126,6 +126,7 @@ class SettingsSaveController extends AsyncNotifier<void> {
     this.state = const AsyncLoading<void>();
 
     ReminderPermissionRequestResult? permissionResult;
+    var didRequestNotificationPermission = false;
 
     this.state = await AsyncValue.guard(() async {
       final repository = ref.read(habitRepositoryProvider);
@@ -165,9 +166,28 @@ class SettingsSaveController extends AsyncNotifier<void> {
       );
 
       if (updatedPlan.reminderEnabled) {
+        didRequestNotificationPermission = true;
         permissionResult = await ref
             .read(reminderPermissionControllerProvider.notifier)
             .request();
+      }
+
+      await repository.savePlan(updatedPlan);
+
+      await repository.savePreference(
+        currentPreference.copyWith(
+          notificationsPermissionRequested: didRequestNotificationPermission
+              ? true
+              : currentPreference.notificationsPermissionRequested,
+          snoozeMinutes: normalizedSnoozeMinutes,
+          defaultQuickAction: state.defaultQuickAction,
+          hapticEnabled: state.hapticEnabled,
+          updatedAt: now,
+          localChangeVersion: currentPreference.localChangeVersion + 1,
+        ),
+      );
+
+      if (updatedPlan.reminderEnabled) {
         if (permissionResult == ReminderPermissionRequestResult.granted) {
           await reminderScheduler.scheduleDailyReminder(
             hour: updatedPlan.reminderHour,
@@ -180,18 +200,6 @@ class SettingsSaveController extends AsyncNotifier<void> {
       } else {
         await reminderScheduler.cancelAllReminders();
       }
-
-      await repository.savePlan(updatedPlan);
-
-      await repository.savePreference(
-        currentPreference.copyWith(
-          snoozeMinutes: normalizedSnoozeMinutes,
-          defaultQuickAction: state.defaultQuickAction,
-          hapticEnabled: state.hapticEnabled,
-          updatedAt: now,
-          localChangeVersion: currentPreference.localChangeVersion + 1,
-        ),
-      );
     });
 
     if (this.state.hasError) {

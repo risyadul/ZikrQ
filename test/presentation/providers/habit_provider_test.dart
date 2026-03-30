@@ -33,9 +33,12 @@ HabitPlan _plan({int target = 7}) => HabitPlan(
   localChangeVersion: 1,
 );
 
-UserPreference _preference({int snoozeMinutes = 10}) => UserPreference(
+UserPreference _preference({
+  int snoozeMinutes = 10,
+  bool notificationsPermissionRequested = true,
+}) => UserPreference(
   onboardingCompleted: true,
-  notificationsPermissionRequested: true,
+  notificationsPermissionRequested: notificationsPermissionRequested,
   soundEnabled: true,
   vibrationEnabled: true,
   snoozeMinutes: snoozeMinutes,
@@ -156,7 +159,11 @@ void main() {
       ),
     );
 
-    verify(() => scheduler.cancelAllReminders()).called(1);
+    verifyInOrder([
+      () => repository.savePlan(any()),
+      () => repository.savePreference(any()),
+      () => scheduler.cancelAllReminders(),
+    ]);
     verifyNever(
       () => scheduler.scheduleDailyReminder(
         hour: any(named: 'hour'),
@@ -164,7 +171,6 @@ void main() {
         activeWeekdays: any(named: 'activeWeekdays'),
       ),
     );
-    verify(() => repository.savePlan(any())).called(1);
   });
 
   test('settings form state normalizes invalid stored snooze value', () async {
@@ -190,11 +196,17 @@ void main() {
       final scheduler = MockReminderScheduler();
 
       when(() => repository.getPlan()).thenAnswer((_) async => _plan());
-      when(
-        () => repository.getPreference(),
-      ).thenAnswer((_) async => _preference());
+      when(() => repository.getPreference()).thenAnswer(
+        (_) async => _preference(notificationsPermissionRequested: false),
+      );
       when(() => repository.savePlan(any())).thenAnswer((_) async {});
-      when(() => repository.savePreference(any())).thenAnswer((_) async {});
+      UserPreference? savedPreference;
+      when(() => repository.savePreference(any())).thenAnswer((
+        invocation,
+      ) async {
+        savedPreference =
+            invocation.positionalArguments.first as UserPreference;
+      });
       when(() => scheduler.requestPermission()).thenAnswer((_) async => false);
       when(() => scheduler.cancelAllReminders()).thenAnswer((_) async {});
 
@@ -221,7 +233,14 @@ void main() {
       );
 
       expect(result, ReminderPermissionRequestResult.deniedCanOpenSettings);
-      verify(() => scheduler.requestPermission()).called(1);
+      expect(savedPreference, isNotNull);
+      expect(savedPreference!.notificationsPermissionRequested, isTrue);
+      verifyInOrder([
+        () => scheduler.requestPermission(),
+        () => repository.savePlan(any()),
+        () => repository.savePreference(any()),
+        () => scheduler.cancelAllReminders(),
+      ]);
       verifyNever(
         () => scheduler.scheduleDailyReminder(
           hour: any(named: 'hour'),
@@ -229,7 +248,6 @@ void main() {
           activeWeekdays: any(named: 'activeWeekdays'),
         ),
       );
-      verify(() => scheduler.cancelAllReminders()).called(1);
     },
   );
 
@@ -240,11 +258,17 @@ void main() {
       final scheduler = MockReminderScheduler();
 
       when(() => repository.getPlan()).thenAnswer((_) async => _plan());
-      when(
-        () => repository.getPreference(),
-      ).thenAnswer((_) async => _preference());
+      when(() => repository.getPreference()).thenAnswer(
+        (_) async => _preference(notificationsPermissionRequested: false),
+      );
       when(() => repository.savePlan(any())).thenAnswer((_) async {});
-      when(() => repository.savePreference(any())).thenAnswer((_) async {});
+      UserPreference? savedPreference;
+      when(() => repository.savePreference(any())).thenAnswer((
+        invocation,
+      ) async {
+        savedPreference =
+            invocation.positionalArguments.first as UserPreference;
+      });
       when(() => scheduler.requestPermission()).thenAnswer((_) async => true);
       when(
         () => scheduler.scheduleDailyReminder(
@@ -277,14 +301,18 @@ void main() {
       );
 
       expect(result, ReminderPermissionRequestResult.granted);
-      verify(() => scheduler.requestPermission()).called(1);
-      verify(
+      expect(savedPreference, isNotNull);
+      expect(savedPreference!.notificationsPermissionRequested, isTrue);
+      verifyInOrder([
+        () => scheduler.requestPermission(),
+        () => repository.savePlan(any()),
+        () => repository.savePreference(any()),
         () => scheduler.scheduleDailyReminder(
-          hour: 6,
-          minute: 15,
-          activeWeekdays: {1, 2, 3, 4, 5, 6, 7},
+          hour: any(named: 'hour'),
+          minute: any(named: 'minute'),
+          activeWeekdays: any(named: 'activeWeekdays'),
         ),
-      ).called(1);
+      ]);
     },
   );
 }
