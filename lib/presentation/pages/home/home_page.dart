@@ -26,6 +26,20 @@ class HomePage extends ConsumerWidget {
     final dashboardAsync = ref.watch(todayDashboardProvider);
     final quickActionState = ref.watch(quickActionProvider);
 
+    ref.listen<QuickActionOperationState>(quickActionProvider, (
+      previous,
+      next,
+    ) {
+      final error = next.error;
+      if (error == null || error == previous?.error) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Aksi cepat gagal: $error')));
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppConstants.appName),
@@ -34,11 +48,12 @@ class HomePage extends ConsumerWidget {
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: () async {
-          ref
-            ..invalidate(memorizationStatsProvider)
-            ..invalidate(recentlyAccessedProvider)
-            ..invalidate(needsReviewProvider)
-            ..invalidate(todayDashboardProvider);
+          await Future.wait<void>([
+            ref.refresh(memorizationStatsProvider.future).then((_) {}),
+            ref.refresh(recentlyAccessedProvider.future).then((_) {}),
+            ref.refresh(needsReviewProvider.future).then((_) {}),
+            ref.refresh(todayDashboardProvider.future).then((_) {}),
+          ]);
         },
         child: ListView(
           padding: const EdgeInsets.all(16),

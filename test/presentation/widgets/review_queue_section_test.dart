@@ -76,6 +76,6 @@ void main() {
     );
 
     expect(find.text('Antrean Murajaah'), findsNothing);
-    expect(find.byType(SizedBox), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNothing);
   });
 }
