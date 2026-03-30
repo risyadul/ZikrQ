@@ -196,6 +196,7 @@ void main() {
       when(() => repository.savePlan(any())).thenAnswer((_) async {});
       when(() => repository.savePreference(any())).thenAnswer((_) async {});
       when(() => scheduler.requestPermission()).thenAnswer((_) async => false);
+      when(() => scheduler.cancelAllReminders()).thenAnswer((_) async {});
 
       final container = ProviderContainer(
         overrides: [
@@ -228,6 +229,7 @@ void main() {
           activeWeekdays: any(named: 'activeWeekdays'),
         ),
       );
+      verify(() => scheduler.cancelAllReminders()).called(1);
     },
   );
 

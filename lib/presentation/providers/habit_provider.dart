@@ -174,6 +174,8 @@ class SettingsSaveController extends AsyncNotifier<void> {
             minute: updatedPlan.reminderMinute,
             activeWeekdays: updatedPlan.activeDays.toSet(),
           );
+        } else {
+          await reminderScheduler.cancelAllReminders();
         }
       } else {
         await reminderScheduler.cancelAllReminders();

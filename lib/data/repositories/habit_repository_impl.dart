@@ -114,8 +114,14 @@ class HabitRepositoryImpl implements HabitRepository {
         soundEnabled: model.soundEnabled,
         vibrationEnabled: model.vibrationEnabled,
         snoozeMinutes: model.snoozeMinutes,
-        defaultQuickAction: _toMemorizationStatus(model.defaultQuickAction),
-        hapticEnabled: model.hapticEnabled,
+        defaultQuickAction: _toMemorizationStatus(
+          model.defaultQuickAction,
+          isLegacy: _isLegacyPreference(model),
+        ),
+        hapticEnabled: _toHapticEnabled(
+          model.hapticEnabled,
+          isLegacy: _isLegacyPreference(model),
+        ),
         updatedAt: model.updatedAt,
         localChangeVersion: model.localChangeVersion,
       );
@@ -143,11 +149,28 @@ class HabitRepositoryImpl implements HabitRepository {
     localChangeVersion: 0,
   );
 
-  static MemorizationStatus _toMemorizationStatus(int index) {
+  static bool _isLegacyPreference(UserPreferenceModel model) {
+    return model.localChangeVersion <= 0;
+  }
+
+  static MemorizationStatus _toMemorizationStatus(
+    int index, {
+    required bool isLegacy,
+  }) {
     if (index < 0 || index >= MemorizationStatus.values.length) {
       return MemorizationStatus.inProgress;
     }
+    if (isLegacy && index == MemorizationStatus.notStarted.index) {
+      return MemorizationStatus.inProgress;
+    }
     return MemorizationStatus.values[index];
+  }
+
+  static bool _toHapticEnabled(bool value, {required bool isLegacy}) {
+    if (isLegacy && value == false) {
+      return true;
+    }
+    return value;
   }
 
   static DateTime _localDate(DateTime date) {
