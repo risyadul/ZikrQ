@@ -315,4 +315,58 @@ void main() {
       ]);
     },
   );
+
+  test(
+    'settings save does not request permission when already requested',
+    () async {
+      final repository = MockHabitRepository();
+      final scheduler = MockReminderScheduler();
+
+      when(() => repository.getPlan()).thenAnswer((_) async => _plan());
+      when(() => repository.getPreference()).thenAnswer(
+        (_) async => _preference(notificationsPermissionRequested: true),
+      );
+      when(() => repository.savePlan(any())).thenAnswer((_) async {});
+      when(() => repository.savePreference(any())).thenAnswer((_) async {});
+      when(
+        () => scheduler.scheduleDailyReminder(
+          hour: any(named: 'hour'),
+          minute: any(named: 'minute'),
+          activeWeekdays: any(named: 'activeWeekdays'),
+        ),
+      ).thenAnswer((_) async {});
+
+      final container = ProviderContainer(
+        overrides: [
+          habitRepositoryProvider.overrideWithValue(repository),
+          reminderSchedulerProvider.overrideWithValue(scheduler),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(settingsSaveControllerProvider.notifier);
+      final result = await notifier.save(
+        const SettingsFormState(
+          dailyTargetAyat: 8,
+          activeDays: {1, 2, 3, 4, 5, 6, 7},
+          reminderEnabled: true,
+          reminderHour: 6,
+          reminderMinute: 15,
+          snoozeMinutes: 10,
+          defaultQuickAction: MemorizationStatus.memorized,
+          hapticEnabled: false,
+        ),
+      );
+
+      expect(result, isNull);
+      verifyNever(() => scheduler.requestPermission());
+      verify(
+        () => scheduler.scheduleDailyReminder(
+          hour: any(named: 'hour'),
+          minute: any(named: 'minute'),
+          activeWeekdays: any(named: 'activeWeekdays'),
+        ),
+      ).called(1);
+    },
+  );
 }

@@ -165,7 +165,11 @@ class SettingsSaveController extends AsyncNotifier<void> {
         localChangeVersion: currentPlan.localChangeVersion + 1,
       );
 
-      if (updatedPlan.reminderEnabled) {
+      final shouldRequestNotificationPermission =
+          updatedPlan.reminderEnabled &&
+          !currentPreference.notificationsPermissionRequested;
+
+      if (shouldRequestNotificationPermission) {
         didRequestNotificationPermission = true;
         permissionResult = await ref
             .read(reminderPermissionControllerProvider.notifier)
@@ -188,7 +192,11 @@ class SettingsSaveController extends AsyncNotifier<void> {
       );
 
       if (updatedPlan.reminderEnabled) {
-        if (permissionResult == ReminderPermissionRequestResult.granted) {
+        final shouldScheduleReminder =
+            !shouldRequestNotificationPermission ||
+            permissionResult == ReminderPermissionRequestResult.granted;
+
+        if (shouldScheduleReminder) {
           await reminderScheduler.scheduleDailyReminder(
             hour: updatedPlan.reminderHour,
             minute: updatedPlan.reminderMinute,
