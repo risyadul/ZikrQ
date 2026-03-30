@@ -36,6 +36,7 @@ void main() {
     final preference = UserPreferenceModel()
       ..onboardingCompleted = true
       ..notificationsPermissionRequested = true
+      ..notificationsPermissionGranted = true
       ..soundEnabled = true
       ..vibrationEnabled = false
       ..snoozeMinutes = 10

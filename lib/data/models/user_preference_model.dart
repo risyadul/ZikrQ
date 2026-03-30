@@ -8,6 +8,7 @@ class UserPreferenceModel {
 
   late bool onboardingCompleted;
   late bool notificationsPermissionRequested;
+  late bool notificationsPermissionGranted;
   late bool soundEnabled;
   late bool vibrationEnabled;
   late int snoozeMinutes;

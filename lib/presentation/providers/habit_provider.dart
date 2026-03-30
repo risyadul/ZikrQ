@@ -126,7 +126,6 @@ class SettingsSaveController extends AsyncNotifier<void> {
     this.state = const AsyncLoading<void>();
 
     ReminderPermissionRequestResult? permissionResult;
-    var didRequestNotificationPermission = false;
 
     this.state = await AsyncValue.guard(() async {
       final repository = ref.read(habitRepositoryProvider);
@@ -169,20 +168,26 @@ class SettingsSaveController extends AsyncNotifier<void> {
           updatedPlan.reminderEnabled &&
           !currentPreference.notificationsPermissionRequested;
 
+      var permissionGranted = currentPreference.notificationsPermissionGranted;
+
       if (shouldRequestNotificationPermission) {
-        didRequestNotificationPermission = true;
         permissionResult = await ref
             .read(reminderPermissionControllerProvider.notifier)
             .request();
+        permissionGranted =
+            permissionResult == ReminderPermissionRequestResult.granted;
       }
+
+      final notificationsPermissionRequested =
+          currentPreference.notificationsPermissionRequested ||
+          shouldRequestNotificationPermission;
 
       await repository.savePlan(updatedPlan);
 
       await repository.savePreference(
         currentPreference.copyWith(
-          notificationsPermissionRequested: didRequestNotificationPermission
-              ? true
-              : currentPreference.notificationsPermissionRequested,
+          notificationsPermissionRequested: notificationsPermissionRequested,
+          notificationsPermissionGranted: permissionGranted,
           snoozeMinutes: normalizedSnoozeMinutes,
           defaultQuickAction: state.defaultQuickAction,
           hapticEnabled: state.hapticEnabled,
@@ -191,20 +196,15 @@ class SettingsSaveController extends AsyncNotifier<void> {
         ),
       );
 
-      if (updatedPlan.reminderEnabled) {
-        final shouldScheduleReminder =
-            !shouldRequestNotificationPermission ||
-            permissionResult == ReminderPermissionRequestResult.granted;
+      final shouldScheduleReminder =
+          updatedPlan.reminderEnabled && permissionGranted;
 
-        if (shouldScheduleReminder) {
-          await reminderScheduler.scheduleDailyReminder(
-            hour: updatedPlan.reminderHour,
-            minute: updatedPlan.reminderMinute,
-            activeWeekdays: updatedPlan.activeDays.toSet(),
-          );
-        } else {
-          await reminderScheduler.cancelAllReminders();
-        }
+      if (shouldScheduleReminder) {
+        await reminderScheduler.scheduleDailyReminder(
+          hour: updatedPlan.reminderHour,
+          minute: updatedPlan.reminderMinute,
+          activeWeekdays: updatedPlan.activeDays.toSet(),
+        );
       } else {
         await reminderScheduler.cancelAllReminders();
       }

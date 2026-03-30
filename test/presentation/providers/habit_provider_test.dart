@@ -36,9 +36,11 @@ HabitPlan _plan({int target = 7}) => HabitPlan(
 UserPreference _preference({
   int snoozeMinutes = 10,
   bool notificationsPermissionRequested = true,
+  bool notificationsPermissionGranted = true,
 }) => UserPreference(
   onboardingCompleted: true,
   notificationsPermissionRequested: notificationsPermissionRequested,
+  notificationsPermissionGranted: notificationsPermissionGranted,
   soundEnabled: true,
   vibrationEnabled: true,
   snoozeMinutes: snoozeMinutes,
@@ -235,6 +237,7 @@ void main() {
       expect(result, ReminderPermissionRequestResult.deniedCanOpenSettings);
       expect(savedPreference, isNotNull);
       expect(savedPreference!.notificationsPermissionRequested, isTrue);
+      expect(savedPreference!.notificationsPermissionGranted, isFalse);
       verifyInOrder([
         () => scheduler.requestPermission(),
         () => repository.savePlan(any()),
@@ -303,6 +306,7 @@ void main() {
       expect(result, ReminderPermissionRequestResult.granted);
       expect(savedPreference, isNotNull);
       expect(savedPreference!.notificationsPermissionRequested, isTrue);
+      expect(savedPreference!.notificationsPermissionGranted, isTrue);
       verifyInOrder([
         () => scheduler.requestPermission(),
         () => repository.savePlan(any()),
@@ -324,7 +328,10 @@ void main() {
 
       when(() => repository.getPlan()).thenAnswer((_) async => _plan());
       when(() => repository.getPreference()).thenAnswer(
-        (_) async => _preference(notificationsPermissionRequested: true),
+        (_) async => _preference(
+          notificationsPermissionRequested: true,
+          notificationsPermissionGranted: true,
+        ),
       );
       when(() => repository.savePlan(any())).thenAnswer((_) async {});
       when(() => repository.savePreference(any())).thenAnswer((_) async {});
@@ -367,6 +374,67 @@ void main() {
           activeWeekdays: any(named: 'activeWeekdays'),
         ),
       ).called(1);
+    },
+  );
+
+  test(
+    'settings save skips scheduling when permission was already denied',
+    () async {
+      final repository = MockHabitRepository();
+      final scheduler = MockReminderScheduler();
+
+      when(() => repository.getPlan()).thenAnswer((_) async => _plan());
+      when(() => repository.getPreference()).thenAnswer(
+        (_) async => _preference(
+          notificationsPermissionRequested: true,
+          notificationsPermissionGranted: false,
+        ),
+      );
+      when(() => repository.savePlan(any())).thenAnswer((_) async {});
+      UserPreference? savedPreference;
+      when(() => repository.savePreference(any())).thenAnswer((
+        invocation,
+      ) async {
+        savedPreference =
+            invocation.positionalArguments.first as UserPreference;
+      });
+      when(() => scheduler.cancelAllReminders()).thenAnswer((_) async {});
+
+      final container = ProviderContainer(
+        overrides: [
+          habitRepositoryProvider.overrideWithValue(repository),
+          reminderSchedulerProvider.overrideWithValue(scheduler),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(settingsSaveControllerProvider.notifier);
+      final result = await notifier.save(
+        const SettingsFormState(
+          dailyTargetAyat: 8,
+          activeDays: {1, 2, 3, 4, 5, 6, 7},
+          reminderEnabled: true,
+          reminderHour: 6,
+          reminderMinute: 15,
+          snoozeMinutes: 10,
+          defaultQuickAction: MemorizationStatus.memorized,
+          hapticEnabled: false,
+        ),
+      );
+
+      expect(result, isNull);
+      expect(savedPreference, isNotNull);
+      expect(savedPreference!.notificationsPermissionRequested, isTrue);
+      expect(savedPreference!.notificationsPermissionGranted, isFalse);
+      verifyNever(() => scheduler.requestPermission());
+      verifyNever(
+        () => scheduler.scheduleDailyReminder(
+          hour: any(named: 'hour'),
+          minute: any(named: 'minute'),
+          activeWeekdays: any(named: 'activeWeekdays'),
+        ),
+      );
+      verify(() => scheduler.cancelAllReminders()).called(1);
     },
   );
 }

@@ -6,6 +6,7 @@ class UserPreference {
   const UserPreference({
     required this.onboardingCompleted,
     required this.notificationsPermissionRequested,
+    required this.notificationsPermissionGranted,
     required this.soundEnabled,
     required this.vibrationEnabled,
     required this.snoozeMinutes,
@@ -17,6 +18,7 @@ class UserPreference {
 
   final bool onboardingCompleted;
   final bool notificationsPermissionRequested;
+  final bool notificationsPermissionGranted;
   final bool soundEnabled;
   final bool vibrationEnabled;
   final int snoozeMinutes;
@@ -28,6 +30,7 @@ class UserPreference {
   UserPreference copyWith({
     bool? onboardingCompleted,
     bool? notificationsPermissionRequested,
+    bool? notificationsPermissionGranted,
     bool? soundEnabled,
     bool? vibrationEnabled,
     int? snoozeMinutes,
@@ -40,6 +43,8 @@ class UserPreference {
     notificationsPermissionRequested:
         notificationsPermissionRequested ??
         this.notificationsPermissionRequested,
+    notificationsPermissionGranted:
+        notificationsPermissionGranted ?? this.notificationsPermissionGranted,
     soundEnabled: soundEnabled ?? this.soundEnabled,
     vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
     snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
@@ -55,6 +60,7 @@ class UserPreference {
       other.onboardingCompleted == onboardingCompleted &&
       other.notificationsPermissionRequested ==
           notificationsPermissionRequested &&
+      other.notificationsPermissionGranted == notificationsPermissionGranted &&
       other.soundEnabled == soundEnabled &&
       other.vibrationEnabled == vibrationEnabled &&
       other.snoozeMinutes == snoozeMinutes &&
@@ -67,6 +73,7 @@ class UserPreference {
   int get hashCode => Object.hash(
     onboardingCompleted,
     notificationsPermissionRequested,
+    notificationsPermissionGranted,
     soundEnabled,
     vibrationEnabled,
     snoozeMinutes,

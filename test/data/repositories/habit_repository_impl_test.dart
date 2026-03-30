@@ -38,6 +38,7 @@ UserPreference _samplePreference({
 }) => UserPreference(
   onboardingCompleted: true,
   notificationsPermissionRequested: true,
+  notificationsPermissionGranted: true,
   soundEnabled: true,
   vibrationEnabled: true,
   snoozeMinutes: 15,
@@ -52,6 +53,8 @@ UserPreferenceModel _modelFromPreference(UserPreference preference) =>
       ..onboardingCompleted = preference.onboardingCompleted
       ..notificationsPermissionRequested =
           preference.notificationsPermissionRequested
+      ..notificationsPermissionGranted =
+          preference.notificationsPermissionGranted
       ..soundEnabled = preference.soundEnabled
       ..vibrationEnabled = preference.vibrationEnabled
       ..snoozeMinutes = preference.snoozeMinutes
@@ -152,5 +155,14 @@ void main() {
     final result = await repository.getPreference();
 
     expect(result.hapticEnabled, isTrue);
+  });
+
+  test('getPreference returns default permission flags when missing', () async {
+    when(() => datasource.getPreference()).thenAnswer((_) async => null);
+
+    final result = await repository.getPreference();
+
+    expect(result.notificationsPermissionRequested, isFalse);
+    expect(result.notificationsPermissionGranted, isFalse);
   });
 }

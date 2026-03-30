@@ -98,6 +98,8 @@ class HabitRepositoryImpl implements HabitRepository {
         ..onboardingCompleted = preference.onboardingCompleted
         ..notificationsPermissionRequested =
             preference.notificationsPermissionRequested
+        ..notificationsPermissionGranted =
+            preference.notificationsPermissionGranted
         ..soundEnabled = preference.soundEnabled
         ..vibrationEnabled = preference.vibrationEnabled
         ..snoozeMinutes = preference.snoozeMinutes
@@ -111,6 +113,7 @@ class HabitRepositoryImpl implements HabitRepository {
         onboardingCompleted: model.onboardingCompleted,
         notificationsPermissionRequested:
             model.notificationsPermissionRequested,
+        notificationsPermissionGranted: model.notificationsPermissionGranted,
         soundEnabled: model.soundEnabled,
         vibrationEnabled: model.vibrationEnabled,
         snoozeMinutes: model.snoozeMinutes,
@@ -140,6 +143,7 @@ class HabitRepositoryImpl implements HabitRepository {
   UserPreference _defaultPreference() => UserPreference(
     onboardingCompleted: false,
     notificationsPermissionRequested: false,
+    notificationsPermissionGranted: false,
     soundEnabled: true,
     vibrationEnabled: true,
     snoozeMinutes: 10,
