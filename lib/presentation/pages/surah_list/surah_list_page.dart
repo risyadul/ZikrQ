@@ -55,6 +55,10 @@ class _SurahListPageState extends ConsumerState<SurahListPage> {
   }
 
   Future<void> _applyBulkMemorized() async {
+    if (ref.read(quickActionProvider).isLoading || _selectedSurahIds.isEmpty) {
+      return;
+    }
+
     final selectedIds = _selectedSurahIds.toList()..sort();
     await ref
         .read(quickActionProvider.notifier)
@@ -68,10 +72,17 @@ class _SurahListPageState extends ConsumerState<SurahListPage> {
   Widget build(BuildContext context) {
     final activeFilter = ref.watch(surahStatusFilterProvider);
     final surahListAsync = ref.watch(surahListProvider);
+    final quickActionState = ref.watch(quickActionProvider);
 
     ref.listen<QuickActionOperationState>(quickActionProvider, (prev, next) {
       if (prev?.isLoading == true && !next.isLoading && next.error == null) {
         setState(() => _selectedSurahIds.clear());
+      }
+
+      if (prev?.error != next.error && next.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Quick action failed: ${next.error}')),
+        );
       }
     });
 
@@ -229,7 +240,9 @@ class _SurahListPageState extends ConsumerState<SurahListPage> {
                     ),
                     FilledButton.icon(
                       key: const Key('bulk-action-memorized'),
-                      onPressed: _selectedSurahIds.isEmpty
+                      onPressed:
+                          _selectedSurahIds.isEmpty ||
+                              quickActionState.isLoading
                           ? null
                           : _applyBulkMemorized,
                       style: FilledButton.styleFrom(

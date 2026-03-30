@@ -78,8 +78,19 @@ class QuickStatusActionSheet extends ConsumerWidget {
                   await ref
                       .read(quickActionProvider.notifier)
                       .updateSingle(surahId: surahId, status: status);
+                  final nextState = ref.read(quickActionProvider);
                   if (context.mounted) {
-                    Navigator.of(context).pop();
+                    if (nextState.error == null) {
+                      Navigator.of(context).pop();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Quick action failed: ${nextState.error}',
+                          ),
+                        ),
+                      );
+                    }
                   }
                 },
               ),

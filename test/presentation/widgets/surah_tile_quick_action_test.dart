@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:zikrq/domain/entities/memorization_status.dart';
 import 'package:zikrq/domain/entities/surah.dart';
 import 'package:zikrq/domain/repositories/quick_action_repository.dart';
+import 'package:zikrq/domain/usecases/quick_update_surah_status.dart';
 import 'package:zikrq/presentation/providers/core_providers.dart';
 import 'package:zikrq/presentation/widgets/surah_tile.dart';
+
+class _MockQuickUpdateSurahStatusUseCase extends Mock
+    implements QuickUpdateSurahStatusUseCase {}
 
 class _FakeQuickActionRepository implements QuickActionRepository {
   _FakeQuickActionRepository({this.lastUsedStatus});
@@ -34,6 +39,10 @@ class _FakeQuickActionRepository implements QuickActionRepository {
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(MemorizationStatus.notStarted);
+  });
+
   const surah = Surah(
     id: 1,
     name: 'Al-Fatihah',
@@ -122,5 +131,44 @@ void main() {
 
     expect(firstTitle.data, 'Memorized');
     expect(find.byKey(const Key('quick-status-memorized')), findsOneWidget);
+  });
+
+  testWidgets('quick action sheet stays open and shows error on failure', (
+    tester,
+  ) async {
+    final fakeRepository = _FakeQuickActionRepository();
+    final quickUpdateUseCase = _MockQuickUpdateSurahStatusUseCase();
+
+    when(
+      () => quickUpdateUseCase.call(
+        surahId: any(named: 'surahId'),
+        status: any(named: 'status'),
+      ),
+    ).thenThrow(Exception('Update failed'));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          quickActionRepositoryProvider.overrideWithValue(fakeRepository),
+          quickUpdateSurahStatusUseCaseProvider.overrideWithValue(
+            quickUpdateUseCase,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SurahTile(surah: surah, onTap: () {}),
+          ),
+        ),
+      ),
+    );
+
+    await tester.longPress(find.text('Al-Fatihah'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('quick-status-memorized')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quick Status'), findsOneWidget);
+    expect(find.textContaining('Update failed'), findsOneWidget);
   });
 }

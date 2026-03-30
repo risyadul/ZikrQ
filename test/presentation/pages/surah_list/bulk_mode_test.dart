@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,5 +96,91 @@ void main() {
         status: MemorizationStatus.memorized,
       ),
     ).called(1);
+  });
+
+  testWidgets('bulk action is disabled while quick action is loading', (
+    tester,
+  ) async {
+    final bulkUpdateUseCase = _MockBulkUpdateSurahStatusUseCase();
+    final quickUpdateUseCase = _MockQuickUpdateSurahStatusUseCase();
+    final completer = Completer<void>();
+
+    when(
+      () => bulkUpdateUseCase.call(
+        surahIds: any(named: 'surahIds'),
+        status: any(named: 'status'),
+      ),
+    ).thenAnswer((_) => completer.future);
+
+    when(
+      () => quickUpdateUseCase.call(
+        surahId: any(named: 'surahId'),
+        status: any(named: 'status'),
+      ),
+    ).thenAnswer((_) async {});
+
+    final surahs = [
+      const Surah(
+        id: 1,
+        name: 'Al-Fatihah',
+        nameArabic: 'الفاتحة',
+        totalVerses: 7,
+        juzStart: 1,
+        revelation: 'Meccan',
+        status: MemorizationStatus.notStarted,
+      ),
+      const Surah(
+        id: 2,
+        name: 'Al-Baqarah',
+        nameArabic: 'البقرة',
+        totalVerses: 286,
+        juzStart: 1,
+        revelation: 'Medinan',
+        status: MemorizationStatus.inProgress,
+      ),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          surahListProvider.overrideWith((_) async => surahs),
+          quickUpdateSurahStatusUseCaseProvider.overrideWithValue(
+            quickUpdateUseCase,
+          ),
+          bulkUpdateSurahStatusUseCaseProvider.overrideWithValue(
+            bulkUpdateUseCase,
+          ),
+        ],
+        child: const MaterialApp(home: SurahListPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('toggle-bulk-mode')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('surah-select-1')));
+    await tester.tap(find.byKey(const Key('surah-select-2')));
+    await tester.pumpAndSettle();
+
+    final actionButton = find.byKey(const Key('bulk-action-memorized'));
+    await tester.tap(actionButton);
+    await tester.pump();
+
+    final disabledButton = tester.widget<FilledButton>(actionButton);
+    expect(disabledButton.onPressed, isNull);
+
+    await tester.tap(actionButton);
+    await tester.pump();
+
+    verify(
+      () => bulkUpdateUseCase.call(
+        surahIds: [1, 2],
+        status: MemorizationStatus.memorized,
+      ),
+    ).called(1);
+
+    completer.complete();
+    await tester.pumpAndSettle();
   });
 }
