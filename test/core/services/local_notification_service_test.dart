@@ -127,6 +127,65 @@ void main() {
         expect(gateway.scheduled.single.at.weekday, DateTime.wednesday);
       },
     );
+
+    test('cancelAllReminders initializes service before canceling', () async {
+      final gateway = _FakeNotificationGateway();
+      final service = LocalNotificationService(
+        gateway: gateway,
+        getLocalTimezone: () async => 'UTC',
+        initializeTimeZones: () {},
+        setLocalLocation: tz.setLocalLocation,
+      );
+
+      await service.cancelAllReminders();
+
+      expect(gateway.initializeCalls, 1);
+      expect(gateway.cancelAllCalls, 1);
+      expect(gateway.callLog, ['initialize', 'cancelAll']);
+    });
+
+    test('scheduleDailyReminder throws for out-of-range hour values', () async {
+      final service = LocalNotificationService(
+        gateway: _FakeNotificationGateway(),
+        getLocalTimezone: () async => 'UTC',
+        initializeTimeZones: () {},
+        setLocalLocation: tz.setLocalLocation,
+      );
+
+      for (final hour in [-1, 24]) {
+        await expectLater(
+          () => service.scheduleDailyReminder(
+            hour: hour,
+            minute: 30,
+            activeWeekdays: const {1},
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
+      }
+    });
+
+    test(
+      'scheduleDailyReminder throws for out-of-range minute values',
+      () async {
+        final service = LocalNotificationService(
+          gateway: _FakeNotificationGateway(),
+          getLocalTimezone: () async => 'UTC',
+          initializeTimeZones: () {},
+          setLocalLocation: tz.setLocalLocation,
+        );
+
+        for (final minute in [-1, 60]) {
+          await expectLater(
+            () => service.scheduleDailyReminder(
+              hour: 21,
+              minute: minute,
+              activeWeekdays: const {1},
+            ),
+            throwsA(isA<ArgumentError>()),
+          );
+        }
+      },
+    );
   });
 }
 
@@ -150,13 +209,22 @@ class _FakeNotificationGateway implements NotificationGateway {
 
   final bool permissionGranted;
   final List<_ScheduledCall> scheduled = [];
+  final List<String> callLog = [];
+  int cancelAllCalls = 0;
+  int initializeCalls = 0;
   int openSettingsCalls = 0;
 
   @override
-  Future<void> cancelAll() async {}
+  Future<void> cancelAll() async {
+    cancelAllCalls += 1;
+    callLog.add('cancelAll');
+  }
 
   @override
-  Future<void> initialize() async {}
+  Future<void> initialize() async {
+    initializeCalls += 1;
+    callLog.add('initialize');
+  }
 
   @override
   Future<void> openSystemSettings() async {

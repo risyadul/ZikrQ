@@ -68,11 +68,19 @@ class LocalNotificationService implements ReminderScheduler {
     required int minute,
     required Set<int> activeWeekdays,
   }) async {
-    await initialize();
+    if (hour < 0 || hour > 23) {
+      throw ArgumentError.value(hour, 'hour');
+    }
+
+    if (minute < 0 || minute > 59) {
+      throw ArgumentError.value(minute, 'minute');
+    }
 
     if (activeWeekdays.any((weekday) => weekday < 1 || weekday > 7)) {
       throw ArgumentError.value(activeWeekdays, 'activeWeekdays');
     }
+
+    await initialize();
 
     await _gateway.cancelAll();
 
@@ -89,7 +97,10 @@ class LocalNotificationService implements ReminderScheduler {
   }
 
   @override
-  Future<void> cancelAllReminders() => _gateway.cancelAll();
+  Future<void> cancelAllReminders() async {
+    await initialize();
+    await _gateway.cancelAll();
+  }
 
   @override
   Future<void> openSystemNotificationSettings() =>
