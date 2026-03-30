@@ -85,7 +85,7 @@ void main() {
   test('update target validation rejects <= 0', () async {
     final repository = MockHabitRepository();
     final useCase = UpdateDailyTargetUseCase(repository);
-    expectLater(useCase(0), throwsArgumentError);
+    await expectLater(useCase(0), throwsArgumentError);
   });
 
   test('reschedule reminder validation rejects invalid hour/minute', () async {
@@ -98,8 +98,8 @@ void main() {
       reminderScheduler: scheduler,
     );
 
-    expectLater(useCase(hour: 24, minute: 0), throwsArgumentError);
+    await expectLater(useCase(hour: 24, minute: 0), throwsArgumentError);
 
-    expectLater(useCase(hour: 10, minute: 99), throwsArgumentError);
+    await expectLater(useCase(hour: 10, minute: 99), throwsArgumentError);
   });
 }

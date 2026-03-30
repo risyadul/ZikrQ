@@ -17,9 +17,11 @@ class GetTodayDashboardUseCase {
     final progressFuture = _habitRepository.getProgressByDate(localDate);
     final queueFuture = _reviewQueueRepository.generateTodayQueue(localDate);
 
-    final plan = await planFuture;
-    final progress = await progressFuture;
-    final queue = await queueFuture;
+    final (plan, progress, queue) = await (
+      planFuture,
+      progressFuture,
+      queueFuture,
+    ).wait;
 
     return TodayDashboard(
       date: localDate,
