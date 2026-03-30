@@ -50,10 +50,25 @@ void main() {
       },
     );
 
+    test('requestPermission returns false when denied', () async {
+      final gateway = _FakeNotificationGateway(permissionGranted: false);
+      final service = LocalNotificationService(
+        gateway: gateway,
+        getLocalTimezone: () async => 'UTC',
+        initializeTimeZones: () {},
+        setLocalLocation: tz.setLocalLocation,
+      );
+
+      await service.initialize();
+      final granted = await service.requestPermission();
+
+      expect(granted, isFalse);
+    });
+
     test(
-      'requestPermission returns false when denied and supports opening settings',
+      'openSystemNotificationSettings triggers gateway settings call',
       () async {
-        final gateway = _FakeNotificationGateway(permissionGranted: false);
+        final gateway = _FakeNotificationGateway();
         final service = LocalNotificationService(
           gateway: gateway,
           getLocalTimezone: () async => 'UTC',
@@ -61,12 +76,11 @@ void main() {
           setLocalLocation: tz.setLocalLocation,
         );
 
-        await service.initialize();
-        final granted = await service.requestPermission();
         await service.openSystemNotificationSettings();
 
-        expect(granted, isFalse);
         expect(gateway.openSettingsCalls, 1);
+        expect(gateway.requestPermissionCalls, 0);
+        expect(gateway.callLog, isEmpty);
       },
     );
 
@@ -213,6 +227,7 @@ class _FakeNotificationGateway implements NotificationGateway {
   int cancelAllCalls = 0;
   int initializeCalls = 0;
   int openSettingsCalls = 0;
+  int requestPermissionCalls = 0;
 
   @override
   Future<void> cancelAll() async {
@@ -232,7 +247,10 @@ class _FakeNotificationGateway implements NotificationGateway {
   }
 
   @override
-  Future<bool> requestPermission() async => permissionGranted;
+  Future<bool> requestPermission() async {
+    requestPermissionCalls += 1;
+    return permissionGranted;
+  }
 
   @override
   Future<void> zonedSchedule({
