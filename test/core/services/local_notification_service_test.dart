@@ -69,7 +69,39 @@ void main() {
         expect(gateway.openSettingsCalls, 1);
       },
     );
+
+    test(
+      'openSystemSettings opens system settings without requesting permission again',
+      () async {
+        var openSettingsCalls = 0;
+        final gateway = _SpyFlutterLocalNotificationGateway(
+          onOpenSettings: () async {
+            openSettingsCalls += 1;
+          },
+        );
+
+        await gateway.openSystemSettings();
+
+        expect(openSettingsCalls, 1);
+        expect(gateway.requestPermissionCalls, 0);
+      },
+    );
   });
+}
+
+class _SpyFlutterLocalNotificationGateway
+    extends FlutterLocalNotificationGateway {
+  _SpyFlutterLocalNotificationGateway({required this.onOpenSettings})
+    : super(openSystemSettings: onOpenSettings);
+
+  final Future<void> Function() onOpenSettings;
+  int requestPermissionCalls = 0;
+
+  @override
+  Future<bool> requestPermission() async {
+    requestPermissionCalls += 1;
+    return false;
+  }
 }
 
 class _FakeNotificationGateway implements NotificationGateway {

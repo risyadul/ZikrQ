@@ -1,3 +1,4 @@
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -120,10 +121,20 @@ abstract interface class NotificationGateway {
 }
 
 class FlutterLocalNotificationGateway implements NotificationGateway {
-  FlutterLocalNotificationGateway({FlutterLocalNotificationsPlugin? plugin})
-    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationGateway({
+    FlutterLocalNotificationsPlugin? plugin,
+    Future<void> Function()? openSystemSettings,
+  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+       _openSystemSettings =
+           openSystemSettings ??
+           (() async {
+             await AppSettings.openAppSettings(
+               type: AppSettingsType.notification,
+             );
+           });
 
   final FlutterLocalNotificationsPlugin _plugin;
+  final Future<void> Function() _openSystemSettings;
 
   static const _details = NotificationDetails(
     android: AndroidNotificationDetails(
@@ -203,7 +214,5 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
   Future<void> cancelAll() => _plugin.cancelAll();
 
   @override
-  Future<void> openSystemSettings() async {
-    await requestPermission();
-  }
+  Future<void> openSystemSettings() => _openSystemSettings();
 }
