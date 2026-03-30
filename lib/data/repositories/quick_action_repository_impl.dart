@@ -38,7 +38,6 @@ class QuickActionRepositoryImpl implements QuickActionRepository {
     required MemorizationStatus status,
   }) async {
     await _memorizationDatasource.updateStatus(surahId, status.index);
-    await setLastUsedStatusAction(status);
   }
 
   @override
@@ -50,6 +49,5 @@ class QuickActionRepositoryImpl implements QuickActionRepository {
       surahIds,
       status.index,
     );
-    await setLastUsedStatusAction(status);
   }
 }

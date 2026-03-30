@@ -35,6 +35,8 @@ final quickActionProvider =
     );
 
 class QuickActionNotifier extends Notifier<QuickActionOperationState> {
+  int _inFlightOperations = 0;
+
   @override
   QuickActionOperationState build() => QuickActionOperationState.idle();
 
@@ -42,14 +44,14 @@ class QuickActionNotifier extends Notifier<QuickActionOperationState> {
     required int surahId,
     required MemorizationStatus status,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    _beginOperation();
     try {
       final useCase = ref.read(quickUpdateSurahStatusUseCaseProvider);
       await useCase(surahId: surahId, status: status);
       _invalidateAfterSuccess();
-      state = state.copyWith(isLoading: false, error: null);
+      _endOperation();
     } catch (error) {
-      state = state.copyWith(isLoading: false, error: error.toString());
+      _endOperation(error: error.toString());
     }
   }
 
@@ -57,15 +59,28 @@ class QuickActionNotifier extends Notifier<QuickActionOperationState> {
     required List<int> surahIds,
     required MemorizationStatus status,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    _beginOperation();
     try {
       final useCase = ref.read(bulkUpdateSurahStatusUseCaseProvider);
       await useCase(surahIds: surahIds, status: status);
       _invalidateAfterSuccess();
-      state = state.copyWith(isLoading: false, error: null);
+      _endOperation();
     } catch (error) {
-      state = state.copyWith(isLoading: false, error: error.toString());
+      _endOperation(error: error.toString());
     }
+  }
+
+  void _beginOperation() {
+    _inFlightOperations += 1;
+    state = state.copyWith(isLoading: true, error: null);
+  }
+
+  void _endOperation({String? error}) {
+    if (_inFlightOperations > 0) {
+      _inFlightOperations -= 1;
+    }
+
+    state = state.copyWith(isLoading: _inFlightOperations > 0, error: error);
   }
 
   void _invalidateAfterSuccess() {

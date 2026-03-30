@@ -13,6 +13,9 @@ import 'package:zikrq/presentation/providers/quick_action_provider.dart';
 class MockBulkUpdateSurahStatusUseCase extends Mock
     implements BulkUpdateSurahStatusUseCase {}
 
+class MockQuickUpdateSurahStatusUseCase extends Mock
+    implements QuickUpdateSurahStatusUseCase {}
+
 class _SerialTrackingQuickActionRepository implements QuickActionRepository {
   int _inFlight = 0;
   int maxConcurrent = 0;
@@ -135,5 +138,67 @@ void main() {
     expect(states.any((state) => state.isLoading), isTrue);
     expect(states.last.isLoading, false);
     expect(states.last.error, isNull);
+  });
+
+  test('keeps loading true until all in-flight operations complete', () async {
+    final quickUpdateUseCase = MockQuickUpdateSurahStatusUseCase();
+    final bulkUpdateUseCase = MockBulkUpdateSurahStatusUseCase();
+    final singleCompleter = Completer<void>();
+    final bulkCompleter = Completer<void>();
+
+    when(
+      () => quickUpdateUseCase.call(
+        surahId: any(named: 'surahId'),
+        status: any(named: 'status'),
+      ),
+    ).thenAnswer((_) => singleCompleter.future);
+
+    when(
+      () => bulkUpdateUseCase.call(
+        surahIds: any(named: 'surahIds'),
+        status: any(named: 'status'),
+      ),
+    ).thenAnswer((_) => bulkCompleter.future);
+
+    final container = ProviderContainer(
+      overrides: [
+        quickUpdateSurahStatusUseCaseProvider.overrideWithValue(
+          quickUpdateUseCase,
+        ),
+        bulkUpdateSurahStatusUseCaseProvider.overrideWithValue(
+          bulkUpdateUseCase,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(quickActionProvider.notifier);
+    final single = notifier.updateSingle(
+      surahId: 5,
+      status: MemorizationStatus.needsReview,
+    );
+    final bulk = notifier.updateBulk(
+      surahIds: const [2, 3],
+      status: MemorizationStatus.inProgress,
+    );
+
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(quickActionProvider).isLoading, isTrue);
+
+    singleCompleter.complete();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(
+      container.read(quickActionProvider).isLoading,
+      isTrue,
+      reason: 'bulk update is still in-flight',
+    );
+
+    bulkCompleter.complete();
+    await Future.wait([single, bulk]);
+
+    final finalState = container.read(quickActionProvider);
+    expect(finalState.isLoading, isFalse);
+    expect(finalState.error, isNull);
   });
 }
