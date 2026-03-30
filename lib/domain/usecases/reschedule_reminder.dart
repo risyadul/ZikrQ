@@ -36,6 +36,8 @@ class RescheduleReminderUseCase {
         minute: updatedPlan.reminderMinute,
         activeWeekdays: updatedPlan.activeDays.toSet(),
       );
+    } else {
+      await _reminderScheduler.cancelAllReminders();
     }
 
     await _habitRepository.savePlan(updatedPlan);

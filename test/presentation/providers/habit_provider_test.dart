@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:zikrq/domain/entities/daily_progress.dart';
 import 'package:zikrq/domain/entities/habit_plan.dart';
+import 'package:zikrq/domain/entities/memorization_status.dart';
 import 'package:zikrq/domain/entities/review_task.dart';
 import 'package:zikrq/domain/entities/today_dashboard.dart';
+import 'package:zikrq/domain/entities/user_preference.dart';
 import 'package:zikrq/domain/repositories/habit_repository.dart';
 import 'package:zikrq/domain/repositories/reminder_scheduler.dart';
 import 'package:zikrq/domain/usecases/get_today_dashboard.dart';
@@ -31,7 +33,24 @@ HabitPlan _plan({int target = 7}) => HabitPlan(
   localChangeVersion: 1,
 );
 
+UserPreference _preference({int snoozeMinutes = 10}) => UserPreference(
+  onboardingCompleted: true,
+  notificationsPermissionRequested: true,
+  soundEnabled: true,
+  vibrationEnabled: true,
+  snoozeMinutes: snoozeMinutes,
+  defaultQuickAction: MemorizationStatus.inProgress,
+  hapticEnabled: true,
+  updatedAt: DateTime(2026, 3, 30),
+  localChangeVersion: 1,
+);
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_plan());
+    registerFallbackValue(_preference());
+  });
+
   test('todayDashboardProvider exposes target and queue size', () async {
     final useCase = MockGetTodayDashboardUseCase();
     final date = DateTime(2026, 3, 30);
@@ -101,5 +120,66 @@ void main() {
     await expectLater(useCase(hour: 24, minute: 0), throwsArgumentError);
 
     await expectLater(useCase(hour: 10, minute: 99), throwsArgumentError);
+  });
+
+  test('settings save cancels reminders when reminder is disabled', () async {
+    final repository = MockHabitRepository();
+    final scheduler = MockReminderScheduler();
+
+    when(() => repository.getPlan()).thenAnswer((_) async => _plan());
+    when(
+      () => repository.getPreference(),
+    ).thenAnswer((_) async => _preference());
+    when(() => repository.savePlan(any())).thenAnswer((_) async {});
+    when(() => repository.savePreference(any())).thenAnswer((_) async {});
+    when(() => scheduler.cancelAllReminders()).thenAnswer((_) async {});
+
+    final container = ProviderContainer(
+      overrides: [
+        habitRepositoryProvider.overrideWithValue(repository),
+        reminderSchedulerProvider.overrideWithValue(scheduler),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(settingsSaveControllerProvider.notifier);
+    await notifier.save(
+      const SettingsFormState(
+        dailyTargetAyat: 8,
+        activeDays: {1, 2, 3, 4, 5, 6, 7},
+        reminderEnabled: false,
+        reminderHour: 6,
+        reminderMinute: 15,
+        snoozeMinutes: 10,
+        defaultQuickAction: MemorizationStatus.memorized,
+        hapticEnabled: false,
+      ),
+    );
+
+    verify(() => scheduler.cancelAllReminders()).called(1);
+    verifyNever(
+      () => scheduler.scheduleDailyReminder(
+        hour: any(named: 'hour'),
+        minute: any(named: 'minute'),
+        activeWeekdays: any(named: 'activeWeekdays'),
+      ),
+    );
+    verify(() => repository.savePlan(any())).called(1);
+  });
+
+  test('settings form state normalizes invalid stored snooze value', () async {
+    final repository = MockHabitRepository();
+    when(() => repository.getPlan()).thenAnswer((_) async => _plan());
+    when(
+      () => repository.getPreference(),
+    ).thenAnswer((_) async => _preference(snoozeMinutes: 0));
+
+    final container = ProviderContainer(
+      overrides: [habitRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+
+    final formState = await container.read(settingsFormStateProvider.future);
+    expect(formState.snoozeMinutes, 10);
   });
 }

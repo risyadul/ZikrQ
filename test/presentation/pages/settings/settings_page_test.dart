@@ -39,4 +39,33 @@ void main() {
 
     expect(find.text('Haptic Feedback'), findsOneWidget);
   });
+
+  testWidgets('SettingsPage tolerates invalid snooze value from state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          settingsFormStateProvider.overrideWith(
+            (_) async => const SettingsFormState(
+              dailyTargetAyat: 5,
+              activeDays: {1, 2, 3, 4, 5, 6, 7},
+              reminderEnabled: true,
+              reminderHour: 5,
+              reminderMinute: 0,
+              snoozeMinutes: 0,
+              defaultQuickAction: MemorizationStatus.inProgress,
+              hapticEnabled: true,
+            ),
+          ),
+        ],
+        child: const MaterialApp(home: SettingsPage()),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Durasi Snooze (menit)'), findsOneWidget);
+  });
 }

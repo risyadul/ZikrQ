@@ -5,6 +5,16 @@ import 'package:zikrq/domain/entities/today_dashboard.dart';
 import 'package:zikrq/domain/entities/user_preference.dart';
 import 'package:zikrq/presentation/providers/core_providers.dart';
 
+const Set<int> kAllowedSnoozeMinutes = {5, 10, 15};
+const int kDefaultSnoozeMinutes = 10;
+
+int normalizeSnoozeMinutes(int value) {
+  if (kAllowedSnoozeMinutes.contains(value)) {
+    return value;
+  }
+  return kDefaultSnoozeMinutes;
+}
+
 final settingsPlanProvider = FutureProvider<HabitPlan>((ref) async {
   final repository = ref.watch(habitRepositoryProvider);
   return repository.getPlan();
@@ -72,7 +82,7 @@ final settingsFormStateProvider = FutureProvider<SettingsFormState>((
     reminderEnabled: plan.reminderEnabled,
     reminderHour: plan.reminderHour,
     reminderMinute: plan.reminderMinute,
-    snoozeMinutes: preference.snoozeMinutes,
+    snoozeMinutes: normalizeSnoozeMinutes(preference.snoozeMinutes),
     defaultQuickAction: preference.defaultQuickAction,
     hapticEnabled: preference.hapticEnabled,
   );
@@ -119,49 +129,59 @@ class SettingsSaveController extends AsyncNotifier<void> {
 
     this.state = await AsyncValue.guard(() async {
       final repository = ref.read(habitRepositoryProvider);
-      final updateDailyTargetUseCase = ref.read(
-        updateDailyTargetUseCaseProvider,
-      );
-      final rescheduleReminderUseCase = ref.read(
-        rescheduleReminderUseCaseProvider,
+      final reminderScheduler = ref.read(reminderSchedulerProvider);
+      final now = DateTime.now();
+      final normalizedSnoozeMinutes = normalizeSnoozeMinutes(
+        state.snoozeMinutes,
       );
 
+      if (state.dailyTargetAyat < 1) {
+        throw ArgumentError.value(
+          state.dailyTargetAyat,
+          'dailyTargetAyat',
+          'dailyTargetAyat must be >= 1',
+        );
+      }
+      if (state.activeDays.isEmpty) {
+        throw ArgumentError.value(
+          state.activeDays,
+          'activeDays',
+          'activeDays must not be empty',
+        );
+      }
+
+      final currentPlan = await repository.getPlan();
       final currentPreference = await repository.getPreference();
-      final targetUpdatedPlan = await updateDailyTargetUseCase(
-        state.dailyTargetAyat,
-      );
 
-      final planWithPreferences = targetUpdatedPlan.copyWith(
+      final updatedPlan = currentPlan.copyWith(
+        dailyTargetAyat: state.dailyTargetAyat,
         activeDays: state.activeDays.toList()..sort(),
         reminderEnabled: state.reminderEnabled,
-        snoozeMinutes: state.snoozeMinutes,
-        updatedAt: DateTime.now(),
-        localChangeVersion: targetUpdatedPlan.localChangeVersion + 1,
-      );
-      await repository.savePlan(planWithPreferences);
-
-      await rescheduleReminderUseCase(
-        hour: state.reminderHour,
-        minute: state.reminderMinute,
+        reminderHour: state.reminderHour,
+        reminderMinute: state.reminderMinute,
+        snoozeMinutes: normalizedSnoozeMinutes,
+        updatedAt: now,
+        localChangeVersion: currentPlan.localChangeVersion + 1,
       );
 
-      final latestPlan = await repository.getPlan();
-      await repository.savePlan(
-        latestPlan.copyWith(
-          activeDays: state.activeDays.toList()..sort(),
-          reminderEnabled: state.reminderEnabled,
-          snoozeMinutes: state.snoozeMinutes,
-          updatedAt: DateTime.now(),
-          localChangeVersion: latestPlan.localChangeVersion + 1,
-        ),
-      );
+      if (updatedPlan.reminderEnabled) {
+        await reminderScheduler.scheduleDailyReminder(
+          hour: updatedPlan.reminderHour,
+          minute: updatedPlan.reminderMinute,
+          activeWeekdays: updatedPlan.activeDays.toSet(),
+        );
+      } else {
+        await reminderScheduler.cancelAllReminders();
+      }
+
+      await repository.savePlan(updatedPlan);
 
       await repository.savePreference(
         currentPreference.copyWith(
-          snoozeMinutes: state.snoozeMinutes,
+          snoozeMinutes: normalizedSnoozeMinutes,
           defaultQuickAction: state.defaultQuickAction,
           hapticEnabled: state.hapticEnabled,
-          updatedAt: DateTime.now(),
+          updatedAt: now,
           localChangeVersion: currentPreference.localChangeVersion + 1,
         ),
       );
@@ -174,7 +194,11 @@ class SettingsSaveController extends AsyncNotifier<void> {
     });
 
     if (this.state.hasError) {
-      throw this.state.error!;
+      final error = this.state.error!;
+      if (error is Exception) {
+        throw error;
+      }
+      throw Exception('Failed to save settings: $error');
     }
 
     ref

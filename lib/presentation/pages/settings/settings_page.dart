@@ -38,6 +38,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         data: (formState) {
           _draft ??= formState;
           final draft = _draft!;
+          final selectedSnoozeMinutes = normalizeSnoozeMinutes(
+            draft.snoozeMinutes,
+          );
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -133,7 +136,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               const Divider(height: 32),
               _buildSectionTitle('Durasi Snooze (menit)'),
               DropdownButtonFormField<int>(
-                value: draft.snoozeMinutes,
+                initialValue: selectedSnoozeMinutes,
                 items: const [5, 10, 15]
                     .map(
                       (value) => DropdownMenuItem<int>(
@@ -151,7 +154,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               const Divider(height: 32),
               _buildSectionTitle('Aksi Cepat Default'),
               DropdownButtonFormField<MemorizationStatus>(
-                value: draft.defaultQuickAction,
+                initialValue: draft.defaultQuickAction,
                 items: MemorizationStatus.values
                     .map(
                       (status) => DropdownMenuItem<MemorizationStatus>(
