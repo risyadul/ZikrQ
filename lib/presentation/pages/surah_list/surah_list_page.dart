@@ -6,11 +6,20 @@ import 'package:go_router/go_router.dart';
 import 'package:zikrq/core/theme/app_colors.dart';
 import 'package:zikrq/core/theme/app_text_styles.dart';
 import 'package:zikrq/domain/entities/memorization_status.dart';
+import 'package:zikrq/presentation/providers/quick_action_provider.dart';
 import 'package:zikrq/presentation/providers/surah_list_provider.dart';
 import 'package:zikrq/presentation/widgets/surah_tile.dart';
 
-class SurahListPage extends ConsumerWidget {
+class SurahListPage extends ConsumerStatefulWidget {
   const SurahListPage({super.key});
+
+  @override
+  ConsumerState<SurahListPage> createState() => _SurahListPageState();
+}
+
+class _SurahListPageState extends ConsumerState<SurahListPage> {
+  final Set<int> _selectedSurahIds = <int>{};
+  bool _isBulkMode = false;
 
   static const _filters = <MemorizationStatus?>[
     null,
@@ -28,14 +37,57 @@ class SurahListPage extends ConsumerWidget {
     'Belum Mulai',
   ];
 
+  void _toggleBulkMode() {
+    setState(() {
+      _isBulkMode = !_isBulkMode;
+      _selectedSurahIds.clear();
+    });
+  }
+
+  void _toggleSelection(int surahId) {
+    setState(() {
+      if (_selectedSurahIds.contains(surahId)) {
+        _selectedSurahIds.remove(surahId);
+      } else {
+        _selectedSurahIds.add(surahId);
+      }
+    });
+  }
+
+  Future<void> _applyBulkMemorized() async {
+    final selectedIds = _selectedSurahIds.toList()..sort();
+    await ref
+        .read(quickActionProvider.notifier)
+        .updateBulk(
+          surahIds: selectedIds,
+          status: MemorizationStatus.memorized,
+        );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final activeFilter = ref.watch(surahStatusFilterProvider);
     final surahListAsync = ref.watch(surahListProvider);
+
+    ref.listen<QuickActionOperationState>(quickActionProvider, (prev, next) {
+      if (prev?.isLoading == true && !next.isLoading && next.error == null) {
+        setState(() => _selectedSurahIds.clear());
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Daftar Surah'),
+        actions: [
+          IconButton(
+            key: const Key('toggle-bulk-mode'),
+            icon: Icon(
+              _isBulkMode ? Icons.close : Icons.checklist,
+              color: AppColors.onSurface,
+            ),
+            onPressed: _toggleBulkMode,
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(100),
           child: Column(
@@ -119,13 +171,78 @@ class SurahListPage extends ConsumerWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final surah = surahs[index];
-            return SurahTile(
-              surah: surah,
-              onTap: () => context.push('/surahs/${surah.id}'),
+            final isSelected = _selectedSurahIds.contains(surah.id);
+
+            return Stack(
+              children: [
+                SurahTile(
+                  surah: surah,
+                  enableQuickActions: !_isBulkMode,
+                  onTap: () {
+                    if (_isBulkMode) {
+                      _toggleSelection(surah.id);
+                      return;
+                    }
+                    context.push('/surahs/${surah.id}');
+                  },
+                ),
+                if (_isBulkMode)
+                  Positioned(
+                    top: 0,
+                    bottom: 0,
+                    right: 8,
+                    child: Center(
+                      child: InkWell(
+                        key: Key('surah-select-${surah.id}'),
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: () => _toggleSelection(surah.id),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            isSelected
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.secondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
       ),
+      bottomNavigationBar: _isBulkMode
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${_selectedSurahIds.length} selected',
+                        style: AppTextStyles.surahMeta,
+                      ),
+                    ),
+                    FilledButton.icon(
+                      key: const Key('bulk-action-memorized'),
+                      onPressed: _selectedSurahIds.isEmpty
+                          ? null
+                          : _applyBulkMemorized,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      icon: const Icon(Icons.done_all),
+                      label: const Text('Memorized'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

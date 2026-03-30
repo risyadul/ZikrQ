@@ -34,6 +34,10 @@ final quickActionProvider =
       QuickActionNotifier.new,
     );
 
+final lastUsedStatusActionProvider = FutureProvider<MemorizationStatus?>(
+  (ref) => ref.watch(quickActionRepositoryProvider).getLastUsedStatusAction(),
+);
+
 class QuickActionNotifier extends Notifier<QuickActionOperationState> {
   int _inFlightOperations = 0;
 
@@ -88,5 +92,6 @@ class QuickActionNotifier extends Notifier<QuickActionOperationState> {
     ref.invalidate(memorizationStatsProvider);
     ref.invalidate(todayDashboardProvider);
     ref.invalidate(reviewQueueProvider);
+    ref.invalidate(lastUsedStatusActionProvider);
   }
 }

@@ -4,13 +4,20 @@ import 'package:flutter/services.dart';
 import 'package:zikrq/core/theme/app_colors.dart';
 import 'package:zikrq/core/theme/app_text_styles.dart';
 import 'package:zikrq/domain/entities/surah.dart';
+import 'package:zikrq/presentation/widgets/quick_status_action_sheet.dart';
 import 'package:zikrq/presentation/widgets/status_badge.dart';
 import 'package:zikrq/presentation/widgets/status_bottom_sheet.dart';
 
 class SurahTile extends StatefulWidget {
-  const SurahTile({required this.surah, required this.onTap, super.key});
+  const SurahTile({
+    required this.surah,
+    required this.onTap,
+    this.enableQuickActions = true,
+    super.key,
+  });
   final Surah surah;
   final VoidCallback onTap;
+  final bool enableQuickActions;
 
   @override
   State<SurahTile> createState() => _SurahTileState();
@@ -30,23 +37,46 @@ class _SurahTileState extends State<SurahTile> {
   }
 
   void _onHorizontalDragEnd(DragEndDetails details) {
+    if (!widget.enableQuickActions) {
+      _resetDrag();
+      return;
+    }
+
     if (_dragOffset <= -_swipeThreshold) {
       HapticFeedback.lightImpact();
       _resetDrag();
-      showModalBottomSheet<void>(
-        context: context,
-        backgroundColor: AppColors.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        builder: (_) => StatusBottomSheet(
-          surahId: widget.surah.id,
-          currentStatus: widget.surah.status,
-        ),
-      );
+      _showStatusBottomSheet();
     } else {
       _resetDrag();
     }
+  }
+
+  void _showStatusBottomSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => StatusBottomSheet(
+        surahId: widget.surah.id,
+        currentStatus: widget.surah.status,
+      ),
+    );
+  }
+
+  void _showQuickStatusActionSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => QuickStatusActionSheet(
+        surahId: widget.surah.id,
+        currentStatus: widget.surah.status,
+      ),
+    );
   }
 
   void _resetDrag() {
@@ -84,6 +114,9 @@ class _SurahTileState extends State<SurahTile> {
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
                 onTap: widget.onTap,
+                onLongPress: widget.enableQuickActions
+                    ? _showQuickStatusActionSheet
+                    : null,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
