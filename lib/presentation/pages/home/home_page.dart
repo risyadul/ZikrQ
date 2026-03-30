@@ -96,6 +96,7 @@ class HomePage extends ConsumerWidget {
                   const SizedBox(height: 20),
                   ReviewQueueSection(
                     queue: dashboard.reviewQueue,
+                    isActionEnabled: !quickActionState.isLoading,
                     onQuickActionPressed: (task) {
                       ref
                           .read(quickActionProvider.notifier)

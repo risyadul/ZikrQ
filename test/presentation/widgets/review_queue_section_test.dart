@@ -61,6 +61,38 @@ void main() {
     expect(tapped, queueItem);
   });
 
+  testWidgets('ReviewQueueSection disables quick action when disabled', (
+    tester,
+  ) async {
+    ReviewTask? tapped;
+    final queueItem = task(id: 'q-disabled', surahId: 55);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ReviewQueueSection(
+            queue: [queueItem],
+            isActionEnabled: false,
+            onQuickActionPressed: (task) => tapped = task,
+          ),
+        ),
+      ),
+    );
+
+    final button = tester.widget<OutlinedButton>(
+      find.byKey(const ValueKey('review-quick-action-q-disabled')),
+    );
+
+    expect(button.onPressed, isNull);
+
+    await tester.tap(
+      find.byKey(const ValueKey('review-quick-action-q-disabled')),
+    );
+    await tester.pump();
+
+    expect(tapped, isNull);
+  });
+
   testWidgets('ReviewQueueSection returns empty widget when queue is empty', (
     tester,
   ) async {

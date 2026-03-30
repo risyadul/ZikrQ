@@ -8,11 +8,13 @@ class ReviewQueueSection extends StatelessWidget {
     required this.queue,
     required this.onQuickActionPressed,
     super.key,
+    this.isActionEnabled = true,
     this.titleBuilder,
   });
 
   final List<ReviewTask> queue;
   final ValueChanged<ReviewTask> onQuickActionPressed;
+  final bool isActionEnabled;
   final String Function(ReviewTask task)? titleBuilder;
 
   @override
@@ -33,6 +35,7 @@ class ReviewQueueSection extends StatelessWidget {
               task: task,
               title: titleBuilder?.call(task) ?? 'Surah ${task.surahId}',
               onQuickActionPressed: onQuickActionPressed,
+              isActionEnabled: isActionEnabled,
             ),
           ),
         ),
@@ -46,11 +49,13 @@ class _ReviewQueueItem extends StatelessWidget {
     required this.task,
     required this.title,
     required this.onQuickActionPressed,
+    required this.isActionEnabled,
   });
 
   final ReviewTask task;
   final String title;
   final ValueChanged<ReviewTask> onQuickActionPressed;
+  final bool isActionEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +83,9 @@ class _ReviewQueueItem extends StatelessWidget {
           ),
           OutlinedButton(
             key: ValueKey('review-quick-action-${task.id}'),
-            onPressed: () => onQuickActionPressed(task),
+            onPressed: isActionEnabled
+                ? () => onQuickActionPressed(task)
+                : null,
             child: const Text('Aksi Cepat'),
           ),
         ],
