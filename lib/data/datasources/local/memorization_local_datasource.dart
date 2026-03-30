@@ -27,6 +27,33 @@ class MemorizationLocalDatasource {
     });
   }
 
+  Future<void> updateStatusesTransactional(
+    List<int> surahIds,
+    int statusIndex,
+  ) async {
+    if (surahIds.isEmpty) {
+      return;
+    }
+
+    await _isar.writeTxn(() async {
+      final now = DateTime.now();
+      for (final surahId in surahIds) {
+        final record = await _isar.memorizationRecordModels
+            .filter()
+            .surahIdEqualTo(surahId)
+            .findFirst();
+        if (record == null) {
+          continue;
+        }
+
+        record
+          ..statusIndex = statusIndex
+          ..updatedAt = now;
+        await _isar.memorizationRecordModels.put(record);
+      }
+    });
+  }
+
   Future<void> updateLastAccessed(int surahId) async {
     final record = await getRecord(surahId);
     if (record == null) return;
