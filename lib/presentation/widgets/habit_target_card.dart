@@ -20,7 +20,7 @@ class HabitTargetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final safeTarget = targetAyat <= 0 ? 1 : targetAyat;
-    final progress = (completedAyat / safeTarget).clamp(0.0, 1.0).toDouble();
+    final progress = (completedAyat / safeTarget).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(16),

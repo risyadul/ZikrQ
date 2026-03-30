@@ -12,7 +12,6 @@ void main() {
       surahId: surahId,
       source: ReviewTaskSource.needsReview,
       scheduledDate: now,
-      lastReviewedAt: null,
       priorityScore: 10,
       updatedAt: now,
       localChangeVersion: 1,
