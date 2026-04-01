@@ -199,7 +199,10 @@ void main() {
 
       when(() => repository.getPlan()).thenAnswer((_) async => _plan());
       when(() => repository.getPreference()).thenAnswer(
-        (_) async => _preference(notificationsPermissionRequested: false),
+        (_) async => _preference(
+          notificationsPermissionRequested: false,
+          notificationsPermissionGranted: false,
+        ),
       );
       when(() => repository.savePlan(any())).thenAnswer((_) async {});
       UserPreference? savedPreference;
@@ -262,7 +265,10 @@ void main() {
 
       when(() => repository.getPlan()).thenAnswer((_) async => _plan());
       when(() => repository.getPreference()).thenAnswer(
-        (_) async => _preference(notificationsPermissionRequested: false),
+        (_) async => _preference(
+          notificationsPermissionRequested: false,
+          notificationsPermissionGranted: false,
+        ),
       );
       when(() => repository.savePlan(any())).thenAnswer((_) async {});
       UserPreference? savedPreference;
@@ -335,6 +341,7 @@ void main() {
       );
       when(() => repository.savePlan(any())).thenAnswer((_) async {});
       when(() => repository.savePreference(any())).thenAnswer((_) async {});
+      when(() => scheduler.getPermissionStatus()).thenAnswer((_) async => true);
       when(
         () => scheduler.scheduleDailyReminder(
           hour: any(named: 'hour'),
@@ -367,6 +374,7 @@ void main() {
 
       expect(result, isNull);
       verifyNever(() => scheduler.requestPermission());
+      verify(() => scheduler.getPermissionStatus()).called(1);
       verify(
         () => scheduler.scheduleDailyReminder(
           hour: any(named: 'hour'),
@@ -378,7 +386,7 @@ void main() {
   );
 
   test(
-    'settings save skips scheduling when permission was already denied',
+    'settings save re-checks OS permission and skips scheduling when still denied',
     () async {
       final repository = MockHabitRepository();
       final scheduler = MockReminderScheduler();
@@ -398,6 +406,9 @@ void main() {
         savedPreference =
             invocation.positionalArguments.first as UserPreference;
       });
+      when(
+        () => scheduler.getPermissionStatus(),
+      ).thenAnswer((_) async => false);
       when(() => scheduler.cancelAllReminders()).thenAnswer((_) async {});
 
       final container = ProviderContainer(
@@ -427,6 +438,7 @@ void main() {
       expect(savedPreference!.notificationsPermissionRequested, isTrue);
       expect(savedPreference!.notificationsPermissionGranted, isFalse);
       verifyNever(() => scheduler.requestPermission());
+      verify(() => scheduler.getPermissionStatus()).called(1);
       verifyNever(
         () => scheduler.scheduleDailyReminder(
           hour: any(named: 'hour'),
@@ -435,6 +447,75 @@ void main() {
         ),
       );
       verify(() => scheduler.cancelAllReminders()).called(1);
+    },
+  );
+
+  test(
+    'settings save re-checks OS permission and schedules when permission was enabled in system settings',
+    () async {
+      final repository = MockHabitRepository();
+      final scheduler = MockReminderScheduler();
+
+      when(() => repository.getPlan()).thenAnswer((_) async => _plan());
+      when(() => repository.getPreference()).thenAnswer(
+        (_) async => _preference(
+          notificationsPermissionRequested: true,
+          notificationsPermissionGranted: false,
+        ),
+      );
+      when(() => repository.savePlan(any())).thenAnswer((_) async {});
+      UserPreference? savedPreference;
+      when(() => repository.savePreference(any())).thenAnswer((
+        invocation,
+      ) async {
+        savedPreference =
+            invocation.positionalArguments.first as UserPreference;
+      });
+      when(() => scheduler.getPermissionStatus()).thenAnswer((_) async => true);
+      when(
+        () => scheduler.scheduleDailyReminder(
+          hour: any(named: 'hour'),
+          minute: any(named: 'minute'),
+          activeWeekdays: any(named: 'activeWeekdays'),
+        ),
+      ).thenAnswer((_) async {});
+
+      final container = ProviderContainer(
+        overrides: [
+          habitRepositoryProvider.overrideWithValue(repository),
+          reminderSchedulerProvider.overrideWithValue(scheduler),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(settingsSaveControllerProvider.notifier);
+      final result = await notifier.save(
+        const SettingsFormState(
+          dailyTargetAyat: 8,
+          activeDays: {1, 2, 3, 4, 5, 6, 7},
+          reminderEnabled: true,
+          reminderHour: 6,
+          reminderMinute: 15,
+          snoozeMinutes: 10,
+          defaultQuickAction: MemorizationStatus.memorized,
+          hapticEnabled: false,
+        ),
+      );
+
+      expect(result, isNull);
+      expect(savedPreference, isNotNull);
+      expect(savedPreference!.notificationsPermissionRequested, isTrue);
+      expect(savedPreference!.notificationsPermissionGranted, isTrue);
+      verifyNever(() => scheduler.requestPermission());
+      verify(() => scheduler.getPermissionStatus()).called(1);
+      verify(
+        () => scheduler.scheduleDailyReminder(
+          hour: 6,
+          minute: 15,
+          activeWeekdays: {1, 2, 3, 4, 5, 6, 7},
+        ),
+      ).called(1);
+      verifyNever(() => scheduler.cancelAllReminders());
     },
   );
 }

@@ -1,4 +1,5 @@
 abstract interface class ReminderScheduler {
+  Future<bool?> getPermissionStatus();
   Future<bool> requestPermission();
 
   /// Schedules reminders in local time for ISO weekdays 1 (Monday) to 7

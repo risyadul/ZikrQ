@@ -66,6 +66,27 @@ void main() {
     });
 
     test(
+      'getPermissionStatus returns current gateway permission state',
+      () async {
+        final gateway = _FakeNotificationGateway(
+          currentPermissionGranted: true,
+        );
+        final service = LocalNotificationService(
+          gateway: gateway,
+          getLocalTimezone: () async => 'UTC',
+          initializeTimeZones: () {},
+          setLocalLocation: tz.setLocalLocation,
+        );
+
+        final granted = await service.getPermissionStatus();
+
+        expect(granted, isTrue);
+        expect(gateway.initializeCalls, 1);
+        expect(gateway.permissionStatusCalls, 1);
+      },
+    );
+
+    test(
       'openSystemNotificationSettings triggers gateway settings call',
       () async {
         final gateway = _FakeNotificationGateway();
@@ -219,14 +240,19 @@ class _SpyFlutterLocalNotificationGateway
 }
 
 class _FakeNotificationGateway implements NotificationGateway {
-  _FakeNotificationGateway({this.permissionGranted = true});
+  _FakeNotificationGateway({
+    this.permissionGranted = true,
+    bool? currentPermissionGranted,
+  }) : currentPermissionGranted = currentPermissionGranted ?? permissionGranted;
 
   final bool permissionGranted;
+  final bool currentPermissionGranted;
   final List<_ScheduledCall> scheduled = [];
   final List<String> callLog = [];
   int cancelAllCalls = 0;
   int initializeCalls = 0;
   int openSettingsCalls = 0;
+  int permissionStatusCalls = 0;
   int requestPermissionCalls = 0;
 
   @override
@@ -244,6 +270,12 @@ class _FakeNotificationGateway implements NotificationGateway {
   @override
   Future<void> openSystemSettings() async {
     openSettingsCalls += 1;
+  }
+
+  @override
+  Future<bool?> getPermissionStatus() async {
+    permissionStatusCalls += 1;
+    return currentPermissionGranted;
   }
 
   @override

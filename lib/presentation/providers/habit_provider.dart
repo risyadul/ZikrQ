@@ -164,11 +164,22 @@ class SettingsSaveController extends AsyncNotifier<void> {
         localChangeVersion: currentPlan.localChangeVersion + 1,
       );
 
+      var permissionGranted = currentPreference.notificationsPermissionGranted;
+      final hasRequestedNotificationPermission =
+          currentPreference.notificationsPermissionRequested;
+
+      if (updatedPlan.reminderEnabled && hasRequestedNotificationPermission) {
+        final actualPermissionGranted = await reminderScheduler
+            .getPermissionStatus();
+        if (actualPermissionGranted != null) {
+          permissionGranted = actualPermissionGranted;
+        }
+      }
+
       final shouldRequestNotificationPermission =
           updatedPlan.reminderEnabled &&
-          !currentPreference.notificationsPermissionRequested;
-
-      var permissionGranted = currentPreference.notificationsPermissionGranted;
+          !permissionGranted &&
+          !hasRequestedNotificationPermission;
 
       if (shouldRequestNotificationPermission) {
         permissionResult = await ref
@@ -179,7 +190,7 @@ class SettingsSaveController extends AsyncNotifier<void> {
       }
 
       final notificationsPermissionRequested =
-          currentPreference.notificationsPermissionRequested ||
+          hasRequestedNotificationPermission ||
           shouldRequestNotificationPermission;
 
       await repository.savePlan(updatedPlan);

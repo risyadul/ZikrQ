@@ -57,6 +57,12 @@ class LocalNotificationService implements ReminderScheduler {
   }
 
   @override
+  Future<bool?> getPermissionStatus() async {
+    await initialize();
+    return _gateway.getPermissionStatus();
+  }
+
+  @override
   Future<bool> requestPermission() async {
     await initialize();
     return _gateway.requestPermission();
@@ -132,6 +138,7 @@ class LocalNotificationService implements ReminderScheduler {
 
 abstract interface class NotificationGateway {
   Future<void> initialize();
+  Future<bool?> getPermissionStatus();
   Future<bool> requestPermission();
   Future<void> zonedSchedule({
     required int id,
@@ -182,6 +189,20 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
     );
 
     await _plugin.initialize(settings);
+  }
+
+  @override
+  Future<bool?> getPermissionStatus() async {
+    final androidGranted = await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.areNotificationsEnabled();
+    if (androidGranted != null) {
+      return androidGranted;
+    }
+
+    return null;
   }
 
   @override
