@@ -41,6 +41,21 @@ abstract final class AppTextStyles {
     color: AppColors.secondary,
   );
 
+  static TextStyle get titleLarge => const TextStyle(
+    fontFamily: _latinFamily,
+    fontSize: 22,
+    fontWeight: FontWeight.w700,
+    color: AppColors.onSurface,
+    height: 1.15,
+  );
+
+  static TextStyle get titleMedium => const TextStyle(
+    fontFamily: _latinFamily,
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: AppColors.onSurface,
+  );
+
   static TextStyle get headline => const TextStyle(
     fontFamily: _latinFamily,
     fontSize: 24,

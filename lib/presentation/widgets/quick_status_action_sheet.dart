@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zikrq/core/theme/app_colors.dart';
+import 'package:zikrq/core/theme/app_text_styles.dart';
 import 'package:zikrq/domain/entities/memorization_status.dart';
 import 'package:zikrq/presentation/providers/quick_action_provider.dart';
 
@@ -36,75 +37,220 @@ class QuickStatusActionSheet extends ConsumerWidget {
     }
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'Quick Status',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w700,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.outline,
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
-            ),
-            const Divider(color: AppColors.notStarted),
-            ...statuses.map(
-              (status) => ListTile(
-                key: Key('quick-status-${status.name}'),
-                enabled: !operationState.isLoading,
-                title: Text(
-                  _labelFor(status),
-                  style: TextStyle(
-                    color: status == lastUsedStatus
-                        ? AppColors.primary
-                        : AppColors.onSurface,
-                    fontWeight: status == lastUsedStatus
-                        ? FontWeight.w700
-                        : FontWeight.normal,
+              const SizedBox(height: 16),
+              Text('Aksi Cepat', style: AppTextStyles.titleMedium),
+              const SizedBox(height: 6),
+              Text(
+                'Pilih status yang ingin diterapkan dengan sekali tap.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.translation,
+              ),
+              if (operationState.error != null) ...[
+                const SizedBox(height: 14),
+                _QuickActionErrorBanner(message: operationState.error!),
+              ],
+              const SizedBox(height: 16),
+              ...statuses.map(
+                (status) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _QuickStatusOption(
+                    itemKey: Key('quick-status-${status.name}'),
+                    status: status,
+                    currentStatus: currentStatus,
+                    isLastUsed: status == lastUsedStatus,
+                    enabled: !operationState.isLoading,
+                    onTap: () async {
+                      await HapticFeedback.lightImpact();
+                      await ref
+                          .read(quickActionProvider.notifier)
+                          .updateSingle(surahId: surahId, status: status);
+                      final nextState = ref.read(quickActionProvider);
+                      if (context.mounted) {
+                        if (nextState.error == null) {
+                          Navigator.of(context).pop();
+                        }
+                      }
+                    },
                   ),
                 ),
-                subtitle: status == currentStatus
-                    ? const Text('Current status')
-                    : null,
-                trailing: status == lastUsedStatus
-                    ? const Icon(Icons.flash_on, color: AppColors.primary)
-                    : null,
-                onTap: () async {
-                  HapticFeedback.lightImpact();
-                  await ref
-                      .read(quickActionProvider.notifier)
-                      .updateSingle(surahId: surahId, status: status);
-                  final nextState = ref.read(quickActionProvider);
-                  if (context.mounted) {
-                    if (nextState.error == null) {
-                      Navigator.of(context).pop();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Quick action failed: ${nextState.error}',
-                          ),
-                        ),
-                      );
-                    }
-                  }
-                },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  String _labelFor(MemorizationStatus status) => switch (status) {
-    MemorizationStatus.notStarted => 'Not Started',
-    MemorizationStatus.inProgress => 'In Progress',
-    MemorizationStatus.memorized => 'Memorized',
-    MemorizationStatus.needsReview => 'Needs Review',
+class _QuickActionErrorBanner extends StatelessWidget {
+  const _QuickActionErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.needsReview.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.needsReview.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.error_outline_rounded,
+              size: 18,
+              color: AppColors.needsReview,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Quick action failed: $message',
+              style: AppTextStyles.translation.copyWith(
+                color: AppColors.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickStatusOption extends StatelessWidget {
+  const _QuickStatusOption({
+    required this.status,
+    required this.currentStatus,
+    required this.isLastUsed,
+    required this.enabled,
+    required this.itemKey,
+    required this.onTap,
+  });
+
+  final MemorizationStatus status;
+  final MemorizationStatus currentStatus;
+  final bool isLastUsed;
+  final bool enabled;
+  final Key itemKey;
+  final VoidCallback onTap;
+
+  Color get _accent => switch (status) {
+    MemorizationStatus.notStarted => AppColors.notStarted,
+    MemorizationStatus.inProgress => AppColors.inProgress,
+    MemorizationStatus.memorized => AppColors.primary,
+    MemorizationStatus.needsReview => AppColors.needsReview,
   };
+
+  IconData get _icon => switch (status) {
+    MemorizationStatus.notStarted => Icons.radio_button_unchecked_rounded,
+    MemorizationStatus.inProgress => Icons.timelapse_rounded,
+    MemorizationStatus.memorized => Icons.check_circle_rounded,
+    MemorizationStatus.needsReview => Icons.priority_high_rounded,
+  };
+
+  String get _supportingText => switch (status) {
+    MemorizationStatus.notStarted =>
+      'Belum mulai sesi hafalan untuk surah ini.',
+    MemorizationStatus.inProgress => 'Masih aktif diulang dan disetorkan.',
+    MemorizationStatus.memorized => 'Sudah kuat dan masuk capaian hafal.',
+    MemorizationStatus.needsReview => 'Perlu diprioritaskan untuk murojaah.',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _accent;
+
+    return Material(
+      key: itemKey,
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: enabled ? onTap : null,
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceRaised,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: status == currentStatus ? accent : AppColors.outline,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(_icon, color: accent),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            status.label,
+                            style: AppTextStyles.surahName.copyWith(
+                              color: status == currentStatus
+                                  ? accent
+                                  : AppColors.onSurface,
+                            ),
+                          ),
+                        ),
+                        if (isLastUsed)
+                          const Icon(
+                            Icons.flash_on_rounded,
+                            color: AppColors.primary,
+                            size: 18,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      status == currentStatus
+                          ? 'Status saat ini'
+                          : _supportingText,
+                      style: AppTextStyles.translation,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

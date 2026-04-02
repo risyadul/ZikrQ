@@ -110,4 +110,35 @@ void main() {
     expect(find.text('Antrean Murajaah'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);
   });
+
+  testWidgets('ReviewQueueSection adapts action button on narrow width', (
+    tester,
+  ) async {
+    final queueItem = task(id: 'q-narrow', surahId: 99);
+
+    await tester.binding.setSurfaceSize(const Size(320, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            child: ReviewQueueSection(
+              queue: [queueItem],
+              onQuickActionPressed: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.byKey(const ValueKey('review-quick-action-q-narrow')),
+      findsOneWidget,
+    );
+  });
 }

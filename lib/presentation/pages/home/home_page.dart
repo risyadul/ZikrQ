@@ -56,8 +56,13 @@ class HomePage extends ConsumerWidget {
           ]);
         },
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
+            _HomeHero(
+              queueCount: dashboardAsync.valueOrNull?.reviewQueue.length ?? 0,
+              completedAyat: dashboardAsync.valueOrNull?.completedAyat ?? 0,
+            ),
+            const SizedBox(height: 20),
             dashboardAsync.when(
               loading: () => const SizedBox(
                 height: 140,
@@ -65,17 +70,8 @@ class HomePage extends ConsumerWidget {
                   child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               ),
-              error: (e, _) => Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Gagal memuat dashboard harian',
-                  style: AppTextStyles.surahMeta,
-                ),
-              ),
+              error: (e, _) =>
+                  const _ErrorCard(message: 'Gagal memuat dashboard harian'),
               data: (dashboard) => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -114,8 +110,6 @@ class HomePage extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // Progress card
             statsAsync.when(
               loading: () => const SizedBox(
                 height: 100,
@@ -123,28 +117,25 @@ class HomePage extends ConsumerWidget {
                   child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               ),
-              error: (e, _) => Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Gagal memuat statistik',
-                  style: AppTextStyles.surahMeta,
-                ),
-              ),
+              error: (e, _) =>
+                  const _ErrorCard(message: 'Gagal memuat statistik'),
               data: (stats) => Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.outline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Progress Hafalan', style: AppTextStyles.sectionLabel),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Ringkasan perjalanan hafalan saat ini',
+                      style: AppTextStyles.translation,
+                    ),
+                    const SizedBox(height: 14),
                     RichText(
                       text: TextSpan(
                         children: [
@@ -159,9 +150,9 @@ class HomePage extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    MemorizationProgressBar(value: stats.memorizedPercent),
                     const SizedBox(height: 12),
+                    MemorizationProgressBar(value: stats.memorizedPercent),
+                    const SizedBox(height: 14),
                     Row(
                       children: [
                         _StatChip(
@@ -188,54 +179,51 @@ class HomePage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Recently accessed
             recentAsync.when(
               loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
               data: (surahs) {
                 if (surahs.isEmpty) return const SizedBox.shrink();
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Terakhir Dibuka', style: AppTextStyles.sectionLabel),
-                    const SizedBox(height: 10),
-                    ...surahs.map(
-                      (s) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: SurahTile(
-                          surah: s,
-                          onTap: () => context.push('/surahs/${s.id}'),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+                return _HomeSection(
+                  title: 'Terakhir Dibuka',
+                  subtitle: 'Lanjutkan dari surah yang terakhir Anda akses.',
+                  child: Column(
+                    children: surahs
+                        .map(
+                          (s) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: SurahTile(
+                              surah: s,
+                              onTap: () => context.push('/surahs/${s.id}'),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
                 );
               },
             ),
-
-            // Needs review
             needsReviewAsync.when(
               loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
               data: (surahs) {
                 if (surahs.isEmpty) return const SizedBox.shrink();
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Perlu Murojaah', style: AppTextStyles.sectionLabel),
-                    const SizedBox(height: 10),
-                    ...surahs.map(
-                      (s) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: SurahTile(
-                          surah: s,
-                          onTap: () => context.push('/surahs/${s.id}'),
-                        ),
-                      ),
-                    ),
-                  ],
+                return _HomeSection(
+                  title: 'Perlu Murojaah',
+                  subtitle: 'Area yang perlu segera disentuh ulang hari ini.',
+                  child: Column(
+                    children: surahs
+                        .map(
+                          (s) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: SurahTile(
+                              surah: s,
+                              onTap: () => context.push('/surahs/${s.id}'),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
                 );
               },
             ),
@@ -246,12 +234,115 @@ class HomePage extends ConsumerWidget {
   }
 }
 
+class _HomeHero extends StatelessWidget {
+  const _HomeHero({required this.queueCount, required this.completedAyat});
+
+  final int queueCount;
+  final int completedAyat;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.16),
+            AppColors.surfaceRaised,
+            AppColors.surface,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Ringkas Hari Ini', style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 8),
+          Text(
+            queueCount == 0
+                ? 'Semua antrean review hari ini sudah bersih.'
+                : '$queueCount antrean review siap dilanjutkan.',
+            style: AppTextStyles.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            completedAyat == 0
+                ? 'Mulai satu sesi singkat untuk menjaga ritme murajaah.'
+                : '$completedAyat ayat sudah diselesaikan hari ini.',
+            style: AppTextStyles.translation.copyWith(
+              color: AppColors.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeSection extends StatelessWidget {
+  const _HomeSection({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 6),
+          Text(subtitle, style: AppTextStyles.translation),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(message, style: AppTextStyles.surahMeta),
+    );
+  }
+}
+
 class _StatChip extends StatelessWidget {
   const _StatChip({
     required this.label,
     required this.count,
     required this.color,
   });
+
   final String label;
   final int count;
   final Color color;
@@ -260,10 +351,10 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
@@ -278,7 +369,11 @@ class _StatChip extends StatelessWidget {
             ),
             Text(
               label,
-              style: TextStyle(color: color, fontSize: 9),
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

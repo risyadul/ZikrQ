@@ -21,53 +21,136 @@ class HabitTargetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final safeTarget = targetAyat <= 0 ? 1 : targetAyat;
     final progress = (completedAyat / safeTarget).clamp(0.0, 1.0);
+    final remainingAyat = (safeTarget - completedAyat).clamp(0, safeTarget);
+    final progressPercent = (progress * 100).round();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          colors: [
+            AppColors.surfaceRaised,
+            AppColors.surface,
+            AppColors.surfaceMuted,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Target Hari Ini', style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 10),
+          Text(
+            '$completedAyat / $safeTarget ayat',
+            style: AppTextStyles.titleLarge.copyWith(
+              color: AppColors.primary,
+              fontSize: 28,
+            ),
+          ),
           const SizedBox(height: 8),
+          Text(
+            remainingAyat == 0
+                ? 'Target hari ini sudah tercapai.'
+                : 'Tinggal $remainingAyat ayat untuk menutup target hari ini.',
+            style: AppTextStyles.translation.copyWith(
+              color: AppColors.onSurface,
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: Text(
-                  '$completedAyat / $safeTarget ayat',
-                  style: AppTextStyles.headline.copyWith(fontSize: 20),
+                child: _InfoPill(
+                  icon: Icons.local_fire_department_rounded,
+                  label: 'Streak',
+                  value: '$streakDays hari',
+                  accent: AppColors.primary,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '$streakDays hari',
-                  style: AppTextStyles.surahMeta.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _InfoPill(
+                  icon: Icons.track_changes_rounded,
+                  label: 'Progress',
+                  value: '$progressPercent%',
+                  accent: AppColors.secondary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           MemorizationProgressBar(value: progress),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
+            child: FilledButton.icon(
               onPressed: onContinueMurajaah,
-              child: const Text('Lanjut Murajaah'),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Lanjut Murajaah'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: accent, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppTextStyles.surahMeta),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: AppTextStyles.surahName.copyWith(fontSize: 14),
+                ),
+              ],
             ),
           ),
         ],

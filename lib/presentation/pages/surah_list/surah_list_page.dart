@@ -76,10 +76,10 @@ class _SurahListPageState extends ConsumerState<SurahListPage> {
 
     ref.listen<QuickActionOperationState>(quickActionProvider, (prev, next) {
       if (_isBulkMode &&
-          prev?.isLoading == true &&
+          (prev?.isLoading ?? false) &&
           !next.isLoading &&
           next.error == null) {
-        setState(() => _selectedSurahIds.clear());
+        setState(_selectedSurahIds.clear);
       }
 
       if (_isBulkMode && prev?.error != next.error && next.error != null) {
@@ -96,169 +96,246 @@ class _SurahListPageState extends ConsumerState<SurahListPage> {
           IconButton(
             key: const Key('toggle-bulk-mode'),
             icon: Icon(
-              _isBulkMode ? Icons.close : Icons.checklist,
+              _isBulkMode ? Icons.close_rounded : Icons.checklist_rounded,
               color: AppColors.onSurface,
             ),
             onPressed: _toggleBulkMode,
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
-          child: Column(
-            children: [
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                child: TextField(
-                  onChanged: (value) =>
-                      ref.read(surahSearchQueryProvider.notifier).state = value,
-                  style: const TextStyle(color: AppColors.onSurface),
-                  decoration: InputDecoration(
-                    hintText: 'Cari surah...',
-                    hintStyle: const TextStyle(color: AppColors.secondary),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: AppColors.secondary,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
-              ),
-              // Filter chips
-              SizedBox(
-                height: 48,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _filters.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final filter = _filters[index];
-                    final isActive = activeFilter == filter;
-                    return ChoiceChip(
-                      label: Text(_filterLabels[index]),
-                      selected: isActive,
-                      onSelected: (_) {
-                        HapticFeedback.lightImpact();
-                        ref.read(surahStatusFilterProvider.notifier).state =
-                            filter;
-                      },
-                      selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                      backgroundColor: AppColors.surface,
-                      labelStyle: TextStyle(
-                        color: isActive
-                            ? AppColors.primary
-                            : AppColors.secondary,
-                        fontSize: 12,
-                      ),
-                      side: BorderSide(
-                        color: isActive
-                            ? AppColors.primary
-                            : AppColors.notStarted,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
-      body: surahListAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-        error: (e, _) =>
-            Center(child: Text('Error: $e', style: AppTextStyles.surahMeta)),
-        data: (surahs) => ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: surahs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final surah = surahs[index];
-            final isSelected = _selectedSurahIds.contains(surah.id);
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: _ListToolbar(
+              activeFilter: activeFilter,
+              isBulkMode: _isBulkMode,
+              onFilterSelected: (filter) {
+                HapticFeedback.lightImpact();
+                ref.read(surahStatusFilterProvider.notifier).state = filter;
+              },
+            ),
+          ),
+          Expanded(
+            child: surahListAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+              error: (e, _) => Center(
+                child: Text('Error: $e', style: AppTextStyles.surahMeta),
+              ),
+              data: (surahs) => ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                itemCount: surahs.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final surah = surahs[index];
+                  final isSelected = _selectedSurahIds.contains(surah.id);
 
-            return Stack(
-              children: [
-                SurahTile(
-                  surah: surah,
-                  enableQuickActions: !_isBulkMode,
-                  onTap: () {
-                    if (_isBulkMode) {
-                      _toggleSelection(surah.id);
-                      return;
-                    }
-                    context.push('/surahs/${surah.id}');
-                  },
-                ),
-                if (_isBulkMode)
-                  Positioned(
-                    top: 0,
-                    bottom: 0,
-                    right: 8,
-                    child: Center(
-                      child: InkWell(
-                        key: Key('surah-select-${surah.id}'),
-                        borderRadius: BorderRadius.circular(999),
-                        onTap: () => _toggleSelection(surah.id),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Icon(
-                            isSelected
-                                ? Icons.check_circle
-                                : Icons.radio_button_unchecked,
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.secondary,
-                          ),
+                  return Stack(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    blurRadius: 18,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: SurahTile(
+                          surah: surah,
+                          enableQuickActions: !_isBulkMode,
+                          onTap: () {
+                            if (_isBulkMode) {
+                              _toggleSelection(surah.id);
+                              return;
+                            }
+                            context.push('/surahs/${surah.id}');
+                          },
                         ),
                       ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
+                      if (_isBulkMode)
+                        Positioned(
+                          top: 0,
+                          bottom: 0,
+                          right: 10,
+                          child: Center(
+                            child: InkWell(
+                              key: Key('surah-select-${surah.id}'),
+                              borderRadius: BorderRadius.circular(999),
+                              onTap: () => _toggleSelection(surah.id),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.primary.withValues(
+                                          alpha: 0.14,
+                                        )
+                                      : AppColors.surface.withValues(
+                                          alpha: 0.9,
+                                        ),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isSelected
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.secondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: _isBulkMode
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${_selectedSurahIds.length} selected',
-                        style: AppTextStyles.surahMeta,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: AppColors.outline),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Mode bulk aktif',
+                              style: AppTextStyles.surahName.copyWith(
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_selectedSurahIds.length} selected',
+                              style: AppTextStyles.surahMeta,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    FilledButton.icon(
-                      key: const Key('bulk-action-memorized'),
-                      onPressed:
-                          _selectedSurahIds.isEmpty ||
-                              quickActionState.isLoading
-                          ? null
-                          : _applyBulkMemorized,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                      FilledButton.icon(
+                        key: const Key('bulk-action-memorized'),
+                        onPressed:
+                            _selectedSurahIds.isEmpty ||
+                                quickActionState.isLoading
+                            ? null
+                            : _applyBulkMemorized,
+                        icon: quickActionState.isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.done_all_rounded),
+                        label: const Text('Memorized'),
                       ),
-                      icon: const Icon(Icons.done_all),
-                      label: const Text('Memorized'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             )
           : null,
+    );
+  }
+}
+
+class _ListToolbar extends ConsumerWidget {
+  const _ListToolbar({
+    required this.activeFilter,
+    required this.isBulkMode,
+    required this.onFilterSelected,
+  });
+
+  final MemorizationStatus? activeFilter;
+  final bool isBulkMode;
+  final ValueChanged<MemorizationStatus?> onFilterSelected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isBulkMode
+                ? 'Pilih beberapa surah untuk update massal.'
+                : 'Cari dan filter surah dengan lebih cepat.',
+            style: AppTextStyles.translation.copyWith(
+              color: AppColors.onSurface,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            onChanged: (value) =>
+                ref.read(surahSearchQueryProvider.notifier).state = value,
+            style: const TextStyle(color: AppColors.onSurface),
+            decoration: const InputDecoration(
+              hintText: 'Cari surah...',
+              prefixIcon: Icon(Icons.search_rounded),
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 42,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _SurahListPageState._filters.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final filter = _SurahListPageState._filters[index];
+                final isActive = activeFilter == filter;
+                return ChoiceChip(
+                  label: Text(_SurahListPageState._filterLabels[index]),
+                  selected: isActive,
+                  onSelected: (_) => onFilterSelected(filter),
+                  selectedColor: AppColors.primary.withValues(alpha: 0.18),
+                  backgroundColor: AppColors.surfaceRaised,
+                  labelStyle: TextStyle(
+                    color: isActive ? AppColors.primary : AppColors.secondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  side: BorderSide(
+                    color: isActive ? AppColors.primary : AppColors.outline,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

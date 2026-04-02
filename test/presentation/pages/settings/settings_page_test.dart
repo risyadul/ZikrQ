@@ -31,6 +31,8 @@ void main() {
 
     expect(find.text('Target Ayat Harian'), findsOneWidget);
     expect(find.text('Pengingat Harian'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Durasi Snooze (menit)'), 200);
+    await tester.pumpAndSettle();
     expect(find.text('Durasi Snooze (menit)'), findsOneWidget);
     expect(find.text('Aksi Cepat Default'), findsOneWidget);
 
@@ -66,6 +68,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    await tester.scrollUntilVisible(find.text('Durasi Snooze (menit)'), 200);
+    await tester.pumpAndSettle();
     expect(find.text('Durasi Snooze (menit)'), findsOneWidget);
   });
 }
