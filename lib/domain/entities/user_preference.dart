@@ -11,6 +11,7 @@ class UserPreference {
     required this.vibrationEnabled,
     required this.snoozeMinutes,
     required this.defaultQuickAction,
+    required this.lastUsedStatusAction,
     required this.hapticEnabled,
     required this.updatedAt,
     required this.localChangeVersion,
@@ -23,6 +24,7 @@ class UserPreference {
   final bool vibrationEnabled;
   final int snoozeMinutes;
   final MemorizationStatus defaultQuickAction;
+  final MemorizationStatus? lastUsedStatusAction;
   final bool hapticEnabled;
   final DateTime updatedAt;
   final int localChangeVersion;
@@ -35,6 +37,7 @@ class UserPreference {
     bool? vibrationEnabled,
     int? snoozeMinutes,
     MemorizationStatus? defaultQuickAction,
+    Object? lastUsedStatusAction = _unset,
     bool? hapticEnabled,
     DateTime? updatedAt,
     int? localChangeVersion,
@@ -49,6 +52,9 @@ class UserPreference {
     vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
     snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
     defaultQuickAction: defaultQuickAction ?? this.defaultQuickAction,
+    lastUsedStatusAction: identical(lastUsedStatusAction, _unset)
+        ? this.lastUsedStatusAction
+        : lastUsedStatusAction as MemorizationStatus?,
     hapticEnabled: hapticEnabled ?? this.hapticEnabled,
     updatedAt: updatedAt ?? this.updatedAt,
     localChangeVersion: localChangeVersion ?? this.localChangeVersion,
@@ -65,6 +71,7 @@ class UserPreference {
       other.vibrationEnabled == vibrationEnabled &&
       other.snoozeMinutes == snoozeMinutes &&
       other.defaultQuickAction == defaultQuickAction &&
+      other.lastUsedStatusAction == lastUsedStatusAction &&
       other.hapticEnabled == hapticEnabled &&
       other.updatedAt == updatedAt &&
       other.localChangeVersion == localChangeVersion;
@@ -78,8 +85,11 @@ class UserPreference {
     vibrationEnabled,
     snoozeMinutes,
     defaultQuickAction,
+    lastUsedStatusAction,
     hapticEnabled,
     updatedAt,
     localChangeVersion,
   );
 }
+
+const _unset = Object();

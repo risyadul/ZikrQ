@@ -45,6 +45,7 @@ UserPreference _preference({
   vibrationEnabled: true,
   snoozeMinutes: snoozeMinutes,
   defaultQuickAction: MemorizationStatus.inProgress,
+  lastUsedStatusAction: null,
   hapticEnabled: true,
   updatedAt: DateTime(2026, 3, 30),
   localChangeVersion: 1,

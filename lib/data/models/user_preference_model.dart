@@ -13,6 +13,7 @@ class UserPreferenceModel {
   late bool vibrationEnabled;
   late int snoozeMinutes;
   late int defaultQuickAction;
+  int? lastUsedStatusAction;
   late bool hapticEnabled;
   late DateTime updatedAt;
   late int localChangeVersion;

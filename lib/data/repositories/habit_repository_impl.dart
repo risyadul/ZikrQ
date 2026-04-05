@@ -104,6 +104,7 @@ class HabitRepositoryImpl implements HabitRepository {
         ..vibrationEnabled = preference.vibrationEnabled
         ..snoozeMinutes = preference.snoozeMinutes
         ..defaultQuickAction = preference.defaultQuickAction.index
+        ..lastUsedStatusAction = preference.lastUsedStatusAction?.index
         ..hapticEnabled = preference.hapticEnabled
         ..updatedAt = preference.updatedAt
         ..localChangeVersion = preference.localChangeVersion;
@@ -120,6 +121,9 @@ class HabitRepositoryImpl implements HabitRepository {
         defaultQuickAction: _toMemorizationStatus(
           model.defaultQuickAction,
           isLegacy: _isLegacyPreference(model),
+        ),
+        lastUsedStatusAction: _toOptionalMemorizationStatus(
+          model.lastUsedStatusAction,
         ),
         hapticEnabled: _toHapticEnabled(
           model.hapticEnabled,
@@ -148,6 +152,7 @@ class HabitRepositoryImpl implements HabitRepository {
     vibrationEnabled: true,
     snoozeMinutes: 10,
     defaultQuickAction: MemorizationStatus.inProgress,
+    lastUsedStatusAction: null,
     hapticEnabled: true,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
     localChangeVersion: 0,
@@ -166,6 +171,16 @@ class HabitRepositoryImpl implements HabitRepository {
     }
     if (isLegacy && index == MemorizationStatus.notStarted.index) {
       return MemorizationStatus.inProgress;
+    }
+    return MemorizationStatus.values[index];
+  }
+
+  static MemorizationStatus? _toOptionalMemorizationStatus(int? index) {
+    if (index == null) {
+      return null;
+    }
+    if (index < 0 || index >= MemorizationStatus.values.length) {
+      return null;
     }
     return MemorizationStatus.values[index];
   }

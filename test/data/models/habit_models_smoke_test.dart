@@ -42,6 +42,7 @@ void main() {
       ..vibrationEnabled = false
       ..snoozeMinutes = 10
       ..defaultQuickAction = 1
+      ..lastUsedStatusAction = 2
       ..hapticEnabled = true
       ..updatedAt = DateTime(2026, 3, 30, 12)
       ..localChangeVersion = 4;

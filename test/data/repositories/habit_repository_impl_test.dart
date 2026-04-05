@@ -43,6 +43,7 @@ UserPreference _samplePreference({
   vibrationEnabled: true,
   snoozeMinutes: 15,
   defaultQuickAction: defaultQuickAction,
+  lastUsedStatusAction: null,
   hapticEnabled: hapticEnabled,
   updatedAt: DateTime(2026, 3, 30, 8),
   localChangeVersion: localChangeVersion,
@@ -59,6 +60,7 @@ UserPreferenceModel _modelFromPreference(UserPreference preference) =>
       ..vibrationEnabled = preference.vibrationEnabled
       ..snoozeMinutes = preference.snoozeMinutes
       ..defaultQuickAction = preference.defaultQuickAction.index
+      ..lastUsedStatusAction = preference.lastUsedStatusAction?.index
       ..hapticEnabled = preference.hapticEnabled
       ..updatedAt = preference.updatedAt
       ..localChangeVersion = preference.localChangeVersion;
@@ -120,6 +122,17 @@ void main() {
 
     expect(result.defaultQuickAction, MemorizationStatus.needsReview);
     expect(result.hapticEnabled, isFalse);
+  });
+
+  test('getPreference maps persisted last used quick action', () async {
+    final model = _modelFromPreference(_samplePreference())
+      ..lastUsedStatusAction = MemorizationStatus.memorized.index;
+
+    when(() => datasource.getPreference()).thenAnswer((_) async => model);
+
+    final result = await repository.getPreference();
+
+    expect(result.lastUsedStatusAction, MemorizationStatus.memorized);
   });
 
   test('getPreference defaults invalid quick action to inProgress', () async {
