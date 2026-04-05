@@ -7,6 +7,13 @@ class MemorizationLocalDatasource {
   const MemorizationLocalDatasource(this._isar);
   final Isar _isar;
 
+  static int nextLocalChangeVersion(int currentVersion) {
+    if (currentVersion <= 0) {
+      return 1;
+    }
+    return currentVersion + 1;
+  }
+
   Future<List<MemorizationRecordModel>> getAllRecords() =>
       _isar.memorizationRecordModels.where().findAll();
 
@@ -22,8 +29,41 @@ class MemorizationLocalDatasource {
     await _isar.writeTxn(() async {
       record
         ..statusIndex = statusIndex
-        ..updatedAt = DateTime.now();
+        ..updatedAt = DateTime.now()
+        ..localChangeVersion = nextLocalChangeVersion(
+          record.localChangeVersion,
+        );
       await _isar.memorizationRecordModels.put(record);
+    });
+  }
+
+  Future<void> updateStatusesTransactional(
+    List<int> surahIds,
+    int statusIndex,
+  ) async {
+    if (surahIds.isEmpty) {
+      return;
+    }
+
+    await _isar.writeTxn(() async {
+      final now = DateTime.now();
+      for (final surahId in surahIds) {
+        final record = await _isar.memorizationRecordModels
+            .filter()
+            .surahIdEqualTo(surahId)
+            .findFirst();
+        if (record == null) {
+          continue;
+        }
+
+        record
+          ..statusIndex = statusIndex
+          ..updatedAt = now
+          ..localChangeVersion = nextLocalChangeVersion(
+            record.localChangeVersion,
+          );
+        await _isar.memorizationRecordModels.put(record);
+      }
     });
   }
 
@@ -31,7 +71,11 @@ class MemorizationLocalDatasource {
     final record = await getRecord(surahId);
     if (record == null) return;
     await _isar.writeTxn(() async {
-      record.lastAccessedAt = DateTime.now();
+      record
+        ..lastAccessedAt = DateTime.now()
+        ..localChangeVersion = nextLocalChangeVersion(
+          record.localChangeVersion,
+        );
       await _isar.memorizationRecordModels.put(record);
     });
   }

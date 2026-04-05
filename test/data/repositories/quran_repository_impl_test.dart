@@ -25,7 +25,8 @@ MemorizationRecordModel _fakeRecord(int surahId, int statusIndex) =>
     MemorizationRecordModel()
       ..surahId = surahId
       ..statusIndex = statusIndex
-      ..updatedAt = DateTime.now();
+      ..updatedAt = DateTime.now()
+      ..localChangeVersion = 1;
 
 VerseModel _fakeVerseModel(int surahId) => VerseModel()
   ..verseId = 1

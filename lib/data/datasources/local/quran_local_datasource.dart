@@ -58,7 +58,8 @@ class QuranLocalDatasource {
           ..statusIndex =
               0 // notStarted
           ..updatedAt = DateTime.now()
-          ..lastAccessedAt = null;
+          ..lastAccessedAt = null
+          ..localChangeVersion = 0;
         await _isar.memorizationRecordModels.put(record);
       }
     });

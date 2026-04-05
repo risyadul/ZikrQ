@@ -29,7 +29,8 @@ MemorizationRecordModel _record(int surahId) {
     ..surahId = surahId
     ..statusIndex = 0
     ..updatedAt = DateTime.now()
-    ..lastAccessedAt = DateTime.now();
+    ..lastAccessedAt = DateTime.now()
+    ..localChangeVersion = 1;
   return r;
 }
 

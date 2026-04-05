@@ -1,0 +1,95 @@
+import 'package:meta/meta.dart';
+import 'package:zikrq/domain/entities/memorization_status.dart';
+
+@immutable
+class UserPreference {
+  const UserPreference({
+    required this.onboardingCompleted,
+    required this.notificationsPermissionRequested,
+    required this.notificationsPermissionGranted,
+    required this.soundEnabled,
+    required this.vibrationEnabled,
+    required this.snoozeMinutes,
+    required this.defaultQuickAction,
+    required this.lastUsedStatusAction,
+    required this.hapticEnabled,
+    required this.updatedAt,
+    required this.localChangeVersion,
+  });
+
+  final bool onboardingCompleted;
+  final bool notificationsPermissionRequested;
+  final bool notificationsPermissionGranted;
+  final bool soundEnabled;
+  final bool vibrationEnabled;
+  final int snoozeMinutes;
+  final MemorizationStatus defaultQuickAction;
+  final MemorizationStatus? lastUsedStatusAction;
+  final bool hapticEnabled;
+  final DateTime updatedAt;
+  final int localChangeVersion;
+
+  UserPreference copyWith({
+    bool? onboardingCompleted,
+    bool? notificationsPermissionRequested,
+    bool? notificationsPermissionGranted,
+    bool? soundEnabled,
+    bool? vibrationEnabled,
+    int? snoozeMinutes,
+    MemorizationStatus? defaultQuickAction,
+    Object? lastUsedStatusAction = _unset,
+    bool? hapticEnabled,
+    DateTime? updatedAt,
+    int? localChangeVersion,
+  }) => UserPreference(
+    onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+    notificationsPermissionRequested:
+        notificationsPermissionRequested ??
+        this.notificationsPermissionRequested,
+    notificationsPermissionGranted:
+        notificationsPermissionGranted ?? this.notificationsPermissionGranted,
+    soundEnabled: soundEnabled ?? this.soundEnabled,
+    vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
+    snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
+    defaultQuickAction: defaultQuickAction ?? this.defaultQuickAction,
+    lastUsedStatusAction: identical(lastUsedStatusAction, _unset)
+        ? this.lastUsedStatusAction
+        : lastUsedStatusAction as MemorizationStatus?,
+    hapticEnabled: hapticEnabled ?? this.hapticEnabled,
+    updatedAt: updatedAt ?? this.updatedAt,
+    localChangeVersion: localChangeVersion ?? this.localChangeVersion,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is UserPreference &&
+      other.onboardingCompleted == onboardingCompleted &&
+      other.notificationsPermissionRequested ==
+          notificationsPermissionRequested &&
+      other.notificationsPermissionGranted == notificationsPermissionGranted &&
+      other.soundEnabled == soundEnabled &&
+      other.vibrationEnabled == vibrationEnabled &&
+      other.snoozeMinutes == snoozeMinutes &&
+      other.defaultQuickAction == defaultQuickAction &&
+      other.lastUsedStatusAction == lastUsedStatusAction &&
+      other.hapticEnabled == hapticEnabled &&
+      other.updatedAt == updatedAt &&
+      other.localChangeVersion == localChangeVersion;
+
+  @override
+  int get hashCode => Object.hash(
+    onboardingCompleted,
+    notificationsPermissionRequested,
+    notificationsPermissionGranted,
+    soundEnabled,
+    vibrationEnabled,
+    snoozeMinutes,
+    defaultQuickAction,
+    lastUsedStatusAction,
+    hapticEnabled,
+    updatedAt,
+    localChangeVersion,
+  );
+}
+
+const _unset = Object();

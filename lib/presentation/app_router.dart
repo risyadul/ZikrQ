@@ -1,6 +1,7 @@
 // lib/presentation/app_router.dart
 import 'package:go_router/go_router.dart';
 import 'package:zikrq/presentation/pages/home/home_page.dart';
+import 'package:zikrq/presentation/pages/settings/settings_page.dart';
 import 'package:zikrq/presentation/pages/shell/main_shell.dart';
 import 'package:zikrq/presentation/pages/statistics/statistics_page.dart';
 import 'package:zikrq/presentation/pages/surah_detail/surah_detail_page.dart';
@@ -22,12 +23,19 @@ abstract final class AppRouter {
             path: '/stats',
             builder: (context, state) => const StatisticsPage(),
           ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => const SettingsPage(),
+          ),
         ],
       ),
       GoRoute(
         path: '/surahs/:id',
         builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+          if (id == null || id < 1) {
+            return const SurahListPage();
+          }
           return SurahDetailPage(surahId: id);
         },
       ),

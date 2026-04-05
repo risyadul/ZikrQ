@@ -15,4 +15,6 @@ class MemorizationRecordModel {
   late DateTime updatedAt;
 
   DateTime? lastAccessedAt;
+
+  late int localChangeVersion;
 }
