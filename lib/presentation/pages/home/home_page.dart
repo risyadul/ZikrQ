@@ -78,7 +78,7 @@ class HomePage extends ConsumerWidget {
                   HabitTargetCard(
                     targetAyat: dashboard.targetAyat,
                     completedAyat: dashboard.completedAyat,
-                    streakDays: dashboard.plan.activeDays.length,
+                    streakDays: dashboard.streakDays,
                     onContinueMurajaah: () {
                       if (dashboard.reviewQueue.isEmpty) {
                         context.push('/surahs');

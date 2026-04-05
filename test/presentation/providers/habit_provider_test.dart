@@ -91,6 +91,7 @@ void main() {
           localChangeVersion: 1,
         ),
       ],
+      streakDays: 4,
     );
 
     when(
@@ -104,6 +105,7 @@ void main() {
 
     final result = await container.read(todayDashboardProvider.future);
     expect(result.targetAyat, 9);
+    expect(result.streakDays, 4);
     expect(result.reviewQueue.length, 2);
   });
 

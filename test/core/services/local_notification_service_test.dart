@@ -1,3 +1,4 @@
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -83,6 +84,27 @@ void main() {
         expect(granted, isTrue);
         expect(gateway.initializeCalls, 1);
         expect(gateway.permissionStatusCalls, 1);
+      },
+    );
+
+    test(
+      'gateway getPermissionStatus falls back to iOS checkPermissions',
+      () async {
+        final gateway = FlutterLocalNotificationGateway(
+          getAndroidPermissionStatus: (_) async => null,
+          getIosPermissions: (_) async => const NotificationsEnabledOptions(
+            isEnabled: true,
+            isAlertEnabled: true,
+            isBadgeEnabled: true,
+            isSoundEnabled: true,
+            isProvisionalEnabled: false,
+            isCriticalEnabled: false,
+          ),
+        );
+
+        final granted = await gateway.getPermissionStatus();
+
+        expect(granted, isTrue);
       },
     );
 

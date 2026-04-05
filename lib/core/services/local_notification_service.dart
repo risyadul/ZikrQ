@@ -154,6 +154,16 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
   FlutterLocalNotificationGateway({
     FlutterLocalNotificationsPlugin? plugin,
     Future<void> Function()? openSystemSettings,
+    Future<bool?> Function(FlutterLocalNotificationsPlugin plugin)?
+    getAndroidPermissionStatus,
+    Future<NotificationsEnabledOptions?> Function(
+      FlutterLocalNotificationsPlugin plugin,
+    )?
+    getIosPermissions,
+    Future<NotificationsEnabledOptions?> Function(
+      FlutterLocalNotificationsPlugin plugin,
+    )?
+    getMacPermissions,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
        _openSystemSettings =
            openSystemSettings ??
@@ -161,10 +171,24 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
              await AppSettings.openAppSettings(
                type: AppSettingsType.notification,
              );
-           });
+           }),
+       _getAndroidPermissionStatus =
+           getAndroidPermissionStatus ?? _defaultGetAndroidPermissionStatus,
+       _getIosPermissions = getIosPermissions ?? _defaultGetIosPermissions,
+       _getMacPermissions = getMacPermissions ?? _defaultGetMacPermissions;
 
   final FlutterLocalNotificationsPlugin _plugin;
   final Future<void> Function() _openSystemSettings;
+  final Future<bool?> Function(FlutterLocalNotificationsPlugin plugin)
+  _getAndroidPermissionStatus;
+  final Future<NotificationsEnabledOptions?> Function(
+    FlutterLocalNotificationsPlugin plugin,
+  )
+  _getIosPermissions;
+  final Future<NotificationsEnabledOptions?> Function(
+    FlutterLocalNotificationsPlugin plugin,
+  )
+  _getMacPermissions;
 
   static const _details = NotificationDetails(
     android: AndroidNotificationDetails(
@@ -175,17 +199,22 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
       priority: Priority.high,
     ),
     iOS: DarwinNotificationDetails(),
+    macOS: DarwinNotificationDetails(),
+    linux: LinuxNotificationDetails(defaultActionName: 'Buka pengingat'),
   );
 
   @override
   Future<void> initialize() async {
+    const darwinSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
-      ),
+      iOS: darwinSettings,
+      macOS: darwinSettings,
+      linux: LinuxInitializationSettings(defaultActionName: 'Buka pengingat'),
     );
 
     await _plugin.initialize(settings);
@@ -193,13 +222,19 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
 
   @override
   Future<bool?> getPermissionStatus() async {
-    final androidGranted = await _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.areNotificationsEnabled();
+    final androidGranted = await _getAndroidPermissionStatus(_plugin);
     if (androidGranted != null) {
       return androidGranted;
+    }
+
+    final iosPermissions = await _getIosPermissions(_plugin);
+    if (iosPermissions != null) {
+      return iosPermissions.isEnabled;
+    }
+
+    final macPermissions = await _getMacPermissions(_plugin);
+    if (macPermissions != null) {
+      return macPermissions.isEnabled;
     }
 
     return null;
@@ -259,4 +294,28 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
 
   @override
   Future<void> openSystemSettings() => _openSystemSettings();
+
+  static Future<bool?> _defaultGetAndroidPermissionStatus(
+    FlutterLocalNotificationsPlugin plugin,
+  ) async => plugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.areNotificationsEnabled();
+
+  static Future<NotificationsEnabledOptions?> _defaultGetIosPermissions(
+    FlutterLocalNotificationsPlugin plugin,
+  ) async => plugin
+      .resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin
+      >()
+      ?.checkPermissions();
+
+  static Future<NotificationsEnabledOptions?> _defaultGetMacPermissions(
+    FlutterLocalNotificationsPlugin plugin,
+  ) async => plugin
+      .resolvePlatformSpecificImplementation<
+        MacOSFlutterLocalNotificationsPlugin
+      >()
+      ?.checkPermissions();
 }

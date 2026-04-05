@@ -9,6 +9,7 @@ class TodayDashboard {
     required this.date,
     required this.plan,
     required List<ReviewTask> reviewQueue,
+    required this.streakDays,
     this.progress,
   }) : reviewQueue = List<ReviewTask>.unmodifiable(reviewQueue);
 
@@ -17,6 +18,7 @@ class TodayDashboard {
   final HabitPlan plan;
   final DailyProgress? progress;
   final List<ReviewTask> reviewQueue;
+  final int streakDays;
 
   int get completedAyat => progress?.completedAyat ?? 0;
   int get targetAyat => progress?.targetAyat ?? plan.dailyTargetAyat;
@@ -28,11 +30,17 @@ class TodayDashboard {
       other.date == date &&
       other.plan == plan &&
       other.progress == progress &&
+      other.streakDays == streakDays &&
       _listEquals(other.reviewQueue, reviewQueue);
 
   @override
-  int get hashCode =>
-      Object.hash(date, plan, progress, Object.hashAll(reviewQueue));
+  int get hashCode => Object.hash(
+    date,
+    plan,
+    progress,
+    streakDays,
+    Object.hashAll(reviewQueue),
+  );
 }
 
 bool _listEquals<T>(List<T> a, List<T> b) {
